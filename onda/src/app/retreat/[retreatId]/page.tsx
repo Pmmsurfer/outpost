@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { unstable_noStore } from "next/cache";
 import { getRetreatDetailFromSupabase } from "@/lib/retreatDetails";
 import RetreatDetailClient from "./RetreatDetailClient";
 
@@ -12,6 +13,7 @@ export async function generateMetadata({
   params: Promise<{ retreatId: string }>;
 }) {
   const { retreatId } = await params;
+  unstable_noStore();
   const detail = await getRetreatDetailFromSupabase(retreatId);
   if (!detail) return { title: "Retreat not found" };
   return {
@@ -26,6 +28,7 @@ export default async function RetreatDetailPage({
   params: Promise<{ retreatId: string }>;
 }) {
   const { retreatId } = await params;
+  unstable_noStore();
   const detail = await getRetreatDetailFromSupabase(retreatId);
   if (!detail) notFound();
 

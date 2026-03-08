@@ -279,7 +279,7 @@ export default function EditRetreatPage() {
         gallery_urls: Array.isArray(galleryUrls) ? galleryUrls : [],
       })
       .eq("id", id)
-      .select("id")
+      .select("id, cover_image_url, gallery_urls")
       .maybeSingle();
     setSavingPhotos(false);
     if (error) {
@@ -290,8 +290,12 @@ export default function EditRetreatPage() {
       setPhotoToast("Could not save. Make sure you're the retreat host.");
       return;
     }
+    const row = data as { cover_image_url?: string | null; gallery_urls?: string[] | null };
+    setCoverImageUrl(row.cover_image_url ?? "");
+    setGalleryUrls(Array.isArray(row.gallery_urls) ? row.gallery_urls : []);
     setPhotoToast("Photos saved.");
     setTimeout(() => setPhotoToast(null), 3000);
+    router.refresh();
   }
 
   function handleSubmit(e: React.FormEvent) {
