@@ -144,7 +144,7 @@ export default function RetreatDetailPage() {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col px-4 sm:px-0">
       <Link
         href="/dashboard/retreats"
         className="mb-6 inline-block text-sm font-semibold text-sage hover:underline"
@@ -196,25 +196,31 @@ export default function RetreatDetailPage() {
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
           href={`/dashboard/retreats/${retreat.id}/edit`}
-          className="inline-flex items-center gap-2 rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink"
+          className="inline-flex items-center gap-2 rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink min-h-[44px] sm:min-h-0"
         >
           Edit retreat →
         </Link>
         <Link
+          href={`/dashboard/retreats/${retreat.id}/edit#photos`}
+          className="inline-flex items-center gap-2 rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink min-h-[44px] sm:min-h-0"
+        >
+          Edit photos →
+        </Link>
+        <Link
           href={`/retreat/${retreat.id}`}
-          className="inline-flex items-center gap-2 rounded-lg bg-sage px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage-light"
+          className="inline-flex items-center gap-2 rounded-lg bg-sage px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage-light min-h-[44px] sm:min-h-0"
         >
           View public listing →
         </Link>
         <Link
           href={`/dashboard/bookings?retreat=${retreat.id}`}
-          className="inline-flex items-center gap-2 rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink"
+          className="inline-flex items-center gap-2 rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink min-h-[44px] sm:min-h-0"
         >
           View all bookings →
         </Link>
         <Link
           href="/dashboard/messages"
-          className="inline-flex items-center gap-2 rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink"
+          className="inline-flex items-center gap-2 rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink min-h-[44px] sm:min-h-0"
         >
           Messages
         </Link>

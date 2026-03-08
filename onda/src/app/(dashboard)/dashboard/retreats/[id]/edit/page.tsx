@@ -11,6 +11,7 @@ import {
   mockConsentCheckboxes,
 } from "@/lib/retreats";
 import { supabase } from "@/lib/supabase";
+import { PhotoUpload } from "@/components/retreat/PhotoUpload";
 
 type Highlight = { id: string; title: string; body: string };
 type Faq = { id: string; question: string; answer: string };
@@ -64,6 +65,8 @@ function buildInitialState(retreatId: string) {
         : [{ id: nextId("room"), name: "", capacity: "", priceDollars: "" }],
     activityLabels: acts.map((a) => a.label).join("\n"),
     consents: cons.map((c) => ({ id: c.id, label: c.label, required: c.required })),
+    coverImageUrl: "",
+    galleryUrls: [] as string[],
   };
 }
 
@@ -105,6 +108,8 @@ function buildInitialStateFromSupabase(row: Record<string, unknown>) {
     accommodations: [{ id: nextId("room"), name: "", capacity: "", priceDollars: "" }],
     activityLabels: "",
     consents: [] as ConsentRow[],
+    coverImageUrl: String(row.cover_image_url ?? ""),
+    galleryUrls: Array.isArray(row.gallery_urls) ? (row.gallery_urls as string[]) : [],
   };
 }
 
@@ -139,8 +144,12 @@ export default function EditRetreatPage() {
   const [accommodations, setAccommodations] = useState<AccommodationRow[]>(initialState.accommodations);
   const [activityLabels, setActivityLabels] = useState(initialState.activityLabels);
   const [consents, setConsents] = useState<ConsentRow[]>(initialState.consents);
+  const [coverImageUrl, setCoverImageUrl] = useState(initialState.coverImageUrl);
+  const [galleryUrls, setGalleryUrls] = useState<string[]>(initialState.galleryUrls);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [savingPhotos, setSavingPhotos] = useState(false);
+  const [photoToast, setPhotoToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (retreatFromMock || !id || !supabase) {
@@ -183,11 +192,13 @@ export default function EditRetreatPage() {
     setAccommodations(s.accommodations);
     setActivityLabels(s.activityLabels);
     setConsents(s.consents);
+    setCoverImageUrl(s.coverImageUrl);
+    setGalleryUrls(s.galleryUrls);
   }, [supabaseRow]);
 
   useEffect(() => {
     const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
-    if (hash === "accommodation" || hash === "activities") {
+    if (hash === "accommodation" || hash === "activities" || hash === "photos") {
       const el = document.getElementById(hash);
       el?.scrollIntoView({ behavior: "smooth" });
     }
@@ -195,7 +206,7 @@ export default function EditRetreatPage() {
 
   useEffect(() => {
     const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
-    if (hash === "accommodation" || hash === "activities") {
+    if (hash === "accommodation" || hash === "activities" || hash === "photos") {
       const el = document.getElementById(hash);
       el?.scrollIntoView({ behavior: "smooth" });
     }
@@ -257,6 +268,26 @@ export default function EditRetreatPage() {
     return Object.keys(next).length === 0;
   }
 
+  async function handleSavePhotos() {
+    if (!supabase || !id || savingPhotos) return;
+    setSavingPhotos(true);
+    setPhotoToast(null);
+    const { error } = await supabase
+      .from("retreats")
+      .update({
+        cover_image_url: coverImageUrl.trim() || null,
+        gallery_urls: galleryUrls,
+      })
+      .eq("id", id);
+    setSavingPhotos(false);
+    if (error) {
+      setPhotoToast(error.message);
+      return;
+    }
+    setPhotoToast("Photos saved.");
+    setTimeout(() => setPhotoToast(null), 3000);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate() || submitting) return;
@@ -269,17 +300,17 @@ export default function EditRetreatPage() {
   const labelClass = "block text-sm font-semibold text-ink";
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col px-4 sm:px-0">
       <Link href={`/dashboard/retreats/${id}`} className="mb-6 inline-block text-sm font-semibold text-sage hover:underline">
         ← Manage retreat
       </Link>
-      <h1 className="font-serif text-[28px] tracking-tight text-ink">Edit retreat</h1>
+      <h1 className="font-serif text-[24px] sm:text-[28px] tracking-tight text-ink">Edit retreat</h1>
       <p className="mt-2 text-warm-gray">
         Update what guests see and what they complete at registration.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 max-w-2xl space-y-10">
-        <section className="rounded-2xl border border-onda-border bg-card-bg p-6">
+      <form onSubmit={handleSubmit} className="mt-6 sm:mt-8 max-w-2xl space-y-8 sm:space-y-10">
+        <section className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6">
           <h2 className="font-serif text-lg text-ink">Basics</h2>
           <p className="mt-1 text-sm text-warm-gray">Name, location, dates, and payment terms.</p>
           <div className="mt-6 space-y-6">
@@ -325,7 +356,7 @@ export default function EditRetreatPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-onda-border bg-card-bg p-6">
+        <section className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6">
           <h2 className="font-serif text-lg text-ink">Listing copy</h2>
           <p className="mt-1 text-sm text-warm-gray">Description and what&apos;s included on the public retreat page.</p>
           <div className="mt-6 space-y-6">
@@ -348,7 +379,7 @@ export default function EditRetreatPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-onda-border bg-card-bg p-6">
+        <section className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6">
           <h2 className="font-serif text-lg text-ink">Trip highlights</h2>
           <p className="mt-1 text-sm text-warm-gray">Title + short body for each highlight.</p>
           <div className="mt-6 space-y-4">
@@ -363,7 +394,7 @@ export default function EditRetreatPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-onda-border bg-card-bg p-6">
+        <section className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6">
           <h2 className="font-serif text-lg text-ink">FAQs</h2>
           <p className="mt-1 text-sm text-warm-gray">Question and answer pairs shown on the retreat page.</p>
           <div className="mt-6 space-y-4">
@@ -378,7 +409,7 @@ export default function EditRetreatPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-onda-border bg-card-bg p-6">
+        <section className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6">
           <h2 className="font-serif text-lg text-ink">Payment & cancellation</h2>
           <p className="mt-1 text-sm text-warm-gray">Shown in the Payment & cancellation section and optionally as COVID note.</p>
           <div className="mt-6 space-y-6">
@@ -397,7 +428,7 @@ export default function EditRetreatPage() {
           </div>
         </section>
 
-        <section id="accommodation" className="rounded-2xl border border-onda-border bg-card-bg p-6 scroll-mt-4">
+        <section id="accommodation" className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6 scroll-mt-4">
           <h2 className="font-serif text-lg text-ink">Rooms & pricing</h2>
           <p className="mt-1 text-sm text-warm-gray">Room types guests can choose at registration. At least one required.</p>
           {errors.accommodations && <p className="mt-2 text-sm text-clay">{errors.accommodations}</p>}
@@ -425,13 +456,46 @@ export default function EditRetreatPage() {
           </div>
         </section>
 
-        <section id="activities" className="rounded-2xl border border-onda-border bg-card-bg p-6 scroll-mt-4">
+        <section id="activities" className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6 scroll-mt-4">
           <h2 className="font-serif text-lg text-ink">Activity options</h2>
           <p className="mt-1 text-sm text-warm-gray">Activities guests can select at registration (e.g. Surf lessons, Yoga). One per line or comma-separated.</p>
           <textarea value={activityLabels} onChange={(e) => setActivityLabels(e.target.value)} rows={3} placeholder="Surf lessons&#10;Yoga&#10;Inversion workshop" className={`mt-4 ${inputClass}`} />
         </section>
 
-        <section className="rounded-2xl border border-onda-border bg-card-bg p-6">
+        <section id="photos" className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6 scroll-mt-4">
+          <h2 className="font-serif text-lg text-ink">Photos</h2>
+          <p className="mt-1 text-sm text-warm-gray">Cover photo is shown on your listing; gallery appears on the retreat page.</p>
+          <div className="mt-6">
+            <PhotoUpload
+              coverUrl={coverImageUrl}
+              galleryUrls={galleryUrls}
+              onCoverChange={setCoverImageUrl}
+              onGalleryChange={setGalleryUrls}
+              retreatId={id}
+              disabled={savingPhotos}
+              galleryCollapsed={false}
+            />
+          </div>
+          {supabase && (
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSavePhotos}
+                disabled={savingPhotos}
+                className="min-h-[44px] rounded-lg bg-sage px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage-light disabled:opacity-60"
+              >
+                {savingPhotos ? "Saving…" : "Save photos"}
+              </button>
+              {photoToast && (
+                <span className={`text-sm ${photoToast.startsWith("Photos saved") ? "text-sage" : "text-clay"}`}>
+                  {photoToast}
+                </span>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6">
           <h2 className="font-serif text-lg text-ink">Policies & consent</h2>
           <p className="mt-1 text-sm text-warm-gray">Checkboxes guests must agree to at registration (e.g. deposit charge, COVID policy).</p>
           <div className="mt-6 space-y-4">
@@ -446,11 +510,11 @@ export default function EditRetreatPage() {
           </div>
         </section>
 
-        <div className="flex flex-wrap gap-3">
-          <button type="submit" disabled={submitting} className="rounded-lg bg-sage px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage-light disabled:opacity-60">
+        <div className="flex flex-wrap gap-3 pb-6 sm:pb-0">
+          <button type="submit" disabled={submitting} className="min-h-[44px] rounded-lg bg-sage px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage-light disabled:opacity-60">
             {submitting ? "Saving…" : "Save changes"}
           </button>
-          <Link href={`/dashboard/retreats/${id}`} className="inline-flex items-center rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink">
+          <Link href={`/dashboard/retreats/${id}`} className="inline-flex items-center min-h-[44px] rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink">
             Cancel
           </Link>
         </div>
