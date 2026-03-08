@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export async function GET(_request: NextRequest) {
+// Next.js route handlers require the request parameter; we don't use it in these handlers
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(request: NextRequest) {
   const supabase = await createServerSupabaseClient();
   if (!supabase) {
     return NextResponse.json({ error: "Server not configured" }, { status: 500 });
@@ -26,7 +28,9 @@ export async function GET(_request: NextRequest) {
   });
 }
 
-export async function DELETE(_request: NextRequest) {
+// Next.js route handlers require the request parameter; we don't use it in these handlers
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function DELETE(request: NextRequest) {
   const supabase = await createServerSupabaseClient();
   if (!supabase) {
     return NextResponse.json({ error: "Server not configured" }, { status: 500 });
