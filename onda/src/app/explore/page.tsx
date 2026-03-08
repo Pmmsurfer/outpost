@@ -105,7 +105,7 @@ export default function ExplorePage() {
       const rows = (retreatsData ?? []) as (SupabaseRetreatRow & { host_id?: string })[];
       const list = rows.map(mapSupabaseRetreatToDiscoverRetreat) as ExploreRetreat[];
 
-      const hostIds = [...new Set(rows.map((r) => r.host_id).filter(Boolean))] as string[];
+      const hostIds = Array.from(new Set(rows.map((r) => r.host_id).filter(Boolean))) as string[];
       const retreatIds = rows.map((r) => r.id);
 
       let profileByHostId: Record<string, string> = {};

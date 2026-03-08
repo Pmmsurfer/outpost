@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
   const { data: retreatRows } = await supabase
     .from("retreats")
     .select("id, start_date, end_date")
-    .in("id", [...new Set(bookings.map((b) => b.retreat_id))]);
+    .in("id", Array.from(new Set(bookings.map((b) => b.retreat_id))));
   const retreatMap = new Map(
     (retreatRows ?? []).map((r) => [r.id, r as { id: string; start_date: string; end_date: string }])
   );
