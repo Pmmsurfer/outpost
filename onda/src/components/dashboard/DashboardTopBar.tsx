@@ -14,7 +14,11 @@ function getInitials(fullName: string | null): string {
   return fullName.slice(0, 2).toUpperCase();
 }
 
-export default function DashboardTopBar() {
+export default function DashboardTopBar({
+  onMenuClick,
+}: {
+  onMenuClick?: () => void;
+}) {
   const router = useRouter();
   const [profile, setProfile] = useState<{
     avatar_url: string | null;
@@ -99,15 +103,25 @@ export default function DashboardTopBar() {
 
   return (
     <div
-      className="flex h-12 flex-shrink-0 items-center justify-end border-b border-[#D8D2C4] px-4"
+      className="flex h-12 flex-shrink-0 items-center justify-between border-b border-[#D8D2C4] px-4 md:justify-end"
       style={{ background: "#F5F0E8" }}
     >
+      <button
+        type="button"
+        onClick={() => onMenuClick?.()}
+        aria-label="Open menu"
+        className="flex min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg text-ink hover:bg-black/5 md:hidden"
+      >
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
       <div className="relative flex items-center justify-end" ref={ref}>
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-85 focus:outline-none focus:ring-2 focus:ring-[#4A6741]/30 focus:ring-offset-2 focus:ring-offset-[#F5F0E8]"
-          aria-label="Open menu"
+          className="flex min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-85 focus:outline-none focus:ring-2 focus:ring-[#4A6741]/30 focus:ring-offset-2 focus:ring-offset-[#F5F0E8]"
+          aria-label="Open account menu"
           aria-expanded={open}
         >
           {loading ? (

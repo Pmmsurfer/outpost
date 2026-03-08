@@ -133,7 +133,7 @@ export default function BookRetreatClient({
   };
 
   return (
-    <div className="min-h-screen bg-cream px-6 py-12">
+    <div className="min-h-screen bg-cream px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto max-w-2xl">
         <Link href={`/retreat/${retreatId}`} className="text-sm font-semibold text-sage hover:underline">
           ← Back to retreat

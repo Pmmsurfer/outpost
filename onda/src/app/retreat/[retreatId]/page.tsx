@@ -31,7 +31,7 @@ export default async function RetreatDetailPage({
   return (
     <div className="min-h-screen bg-cream">
       {/* Nav */}
-      <nav className="sticky top-0 z-[200] flex items-center justify-between border-b border-onda-border bg-white px-6 py-3 md:px-8">
+      <nav className="sticky top-0 z-[200] flex items-center justify-between border-b border-onda-border bg-white px-4 py-3 md:px-8">
         <Link href="/" className="font-serif text-[22px] tracking-tight text-ink">
           Outpos<span className="text-sage">t</span>
         </Link>
@@ -45,7 +45,7 @@ export default async function RetreatDetailPage({
         </div>
       </nav>
 
-      <div className="mx-auto max-w-[900px] px-6 pb-16 pt-8 md:px-8">
+      <div className="mx-auto max-w-[900px] px-4 pb-16 pt-6 md:px-8">
         {/* Back to retreats — prominent */}
         <Link
           href="/explore"

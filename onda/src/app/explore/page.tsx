@@ -193,7 +193,7 @@ export default function ExplorePage() {
     <div className="flex min-h-screen flex-col bg-cream">
       {/* Nav — design system: cream bg, border, ink wordmark, sage CTA */}
       <nav
-        className="sticky top-0 z-[200] flex flex-wrap items-center gap-6 border-b px-8 py-3.5"
+        className="sticky top-0 z-[200] flex flex-wrap items-center gap-3 border-b px-4 py-3 sm:gap-4 sm:px-6 sm:py-3.5 md:px-8"
         style={{ background: "#F5F0E8", borderBottomWidth: 1, borderBottomColor: "#D8D2C4" }}
       >
         <Link
@@ -203,7 +203,7 @@ export default function ExplorePage() {
         >
           Outpos<span className="text-sage">t</span>
         </Link>
-        <div className="flex min-w-[180px] max-w-[420px] flex-1 items-center rounded-full border border-transparent bg-white/80 py-3 px-5 transition-all focus-within:border-[#D8D2C4] focus-within:bg-white focus-within:shadow-md hover:bg-white hover:shadow-md">
+        <div className="flex min-w-0 flex-1 items-center rounded-full border border-transparent bg-white/80 py-2.5 px-4 transition-all focus-within:border-[#D8D2C4] focus-within:bg-white focus-within:shadow-md hover:bg-white hover:shadow-md sm:min-w-[140px] sm:py-3 sm:px-5">
           <span className="mr-3 text-warm-gray">📍</span>
           <input
             type="text"
@@ -223,7 +223,7 @@ export default function ExplorePage() {
           </Link>
           <Link
             href="/dashboard"
-            className="rounded-full px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+            className="rounded-full px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 sm:px-5 sm:py-2.5 min-h-[44px] flex items-center justify-center"
             style={{ backgroundColor: "#4A6741" }}
           >
             List your retreat
@@ -232,12 +232,12 @@ export default function ExplorePage() {
       </nav>
 
       {/* Filter bar — unchanged */}
-      <div className="relative sticky top-[57px] z-[150] border-b border-onda-border bg-white px-8">
-        <div className="flex flex-wrap items-center gap-2 overflow-x-auto py-3 scrollbar-none">
+      <div className="relative sticky top-[53px] z-[150] border-b border-onda-border bg-white px-4 sm:top-[57px] sm:px-6 md:px-8">
+        <div className="flex flex-wrap items-center gap-2 overflow-x-auto py-3 scrollbar-none [-webkit-overflow-scrolling:touch]">
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "when" ? null : "when"); }}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 ${
               when ? "border-ink bg-ink text-white hover:bg-ink/90" : "border-onda-border bg-transparent text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
             }`}
           >
@@ -247,7 +247,7 @@ export default function ExplorePage() {
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "duration" ? null : "duration"); }}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 ${
               duration ? "border-ink bg-ink text-white" : "border-onda-border bg-transparent text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
             }`}
           >
@@ -256,7 +256,7 @@ export default function ExplorePage() {
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "price" ? null : "price"); }}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 ${
               price ? "border-ink bg-ink text-white" : "border-onda-border bg-transparent text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
             }`}
           >
@@ -265,7 +265,7 @@ export default function ExplorePage() {
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "guests" ? null : "guests"); }}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 ${
               guests ? "border-ink bg-ink text-white" : "border-onda-border bg-transparent text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
             }`}
           >
@@ -274,7 +274,7 @@ export default function ExplorePage() {
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "activity" ? null : "activity"); }}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 ${
               activity ? "border-ink bg-ink text-white" : "border-onda-border bg-transparent text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
             }`}
           >
@@ -300,7 +300,7 @@ export default function ExplorePage() {
 
         {/* Dropdowns */}
         {openDropdown === "when" && (
-          <div className="absolute left-8 right-8 top-full z-[300] mt-1 max-w-xs rounded-xl border border-onda-border bg-white py-3 shadow-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute left-4 right-4 top-full z-[300] mt-1 max-w-xs rounded-xl border border-onda-border bg-white py-3 shadow-lg sm:left-8 sm:right-8" onClick={(e) => e.stopPropagation()}>
             {(["", "weekend", "week", "month", "quarter"] as const).map((v) => (
               <label key={v || "any"} className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
                 <input type="radio" name="when" checked={when === v} onChange={() => { setWhen(v); setOpenDropdown(null); }} className="accent-sage" />
@@ -310,7 +310,7 @@ export default function ExplorePage() {
           </div>
         )}
         {openDropdown === "duration" && (
-          <div className="absolute left-8 top-full z-[300] mt-1 min-w-[200px] rounded-xl border border-onda-border bg-white py-3 shadow-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute left-4 top-full z-[300] mt-1 min-w-[200px] rounded-xl border border-onda-border bg-white py-3 shadow-lg sm:left-8" onClick={(e) => e.stopPropagation()}>
             {(["", "weekend", "week", "long"] as const).map((v) => (
               <label key={v || "any"} className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
                 <input type="radio" name="duration" checked={duration === v} onChange={() => { setDuration(v); setOpenDropdown(null); }} className="accent-sage" />
@@ -320,7 +320,7 @@ export default function ExplorePage() {
           </div>
         )}
         {openDropdown === "price" && (
-          <div className="absolute left-8 top-full z-[300] mt-1 min-w-[200px] rounded-xl border border-onda-border bg-white py-3 shadow-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute left-4 top-full z-[300] mt-1 min-w-[200px] rounded-xl border border-onda-border bg-white py-3 shadow-lg sm:left-8" onClick={(e) => e.stopPropagation()}>
             {(["", "under1k", "1k-2k", "2k-3k", "3k"] as const).map((v) => (
               <label key={v || "any"} className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
                 <input type="radio" name="price" checked={price === v} onChange={() => { setPrice(v); setOpenDropdown(null); }} className="accent-sage" />
@@ -330,7 +330,7 @@ export default function ExplorePage() {
           </div>
         )}
         {openDropdown === "guests" && (
-          <div className="absolute left-8 top-full z-[300] mt-1 min-w-[200px] rounded-xl border border-onda-border bg-white py-3 shadow-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute left-4 top-full z-[300] mt-1 min-w-[200px] rounded-xl border border-onda-border bg-white py-3 shadow-lg sm:left-8" onClick={(e) => e.stopPropagation()}>
             {(["", "solo", "small", "medium", "large"] as const).map((v) => (
               <label key={v || "any"} className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
                 <input type="radio" name="guests" checked={guests === v} onChange={() => { setGuests(v); setOpenDropdown(null); }} className="accent-sage" />
@@ -340,7 +340,7 @@ export default function ExplorePage() {
           </div>
         )}
         {openDropdown === "activity" && (
-          <div className="absolute left-8 top-full z-[300] mt-1 min-w-[220px] rounded-xl border border-onda-border bg-white py-3 shadow-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute left-4 top-full z-[300] mt-1 min-w-[220px] rounded-xl border border-onda-border bg-white py-3 shadow-lg sm:left-8" onClick={(e) => e.stopPropagation()}>
             {(["yoga", "surf", "hiking", "writing", "wellness", "adventure"] as const).map((v) => (
               <label key={v} className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
                 <input type="radio" name="activity" checked={activity === v} onChange={() => { setActivity(v); setOpenDropdown(null); }} className="accent-sage" />
@@ -356,7 +356,7 @@ export default function ExplorePage() {
       </div>
 
       {/* Main */}
-      <main className="mx-auto w-full max-w-[1280px] flex-1 px-8 py-6 pb-12">
+      <main className="mx-auto w-full max-w-[1280px] flex-1 px-4 py-4 pb-10 sm:px-6 sm:py-6 sm:pb-12 md:px-8">
         {error && (
           <div className="py-16 text-center text-warm-gray">
             {error}
@@ -441,7 +441,7 @@ export default function ExplorePage() {
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto flex flex-wrap items-center justify-between gap-4 border-t border-onda-border bg-white px-8 py-5">
+      <footer className="mt-auto flex flex-wrap items-center justify-between gap-4 border-t border-onda-border bg-white px-4 py-5 sm:px-6 md:px-8">
         <Link href="/" className="font-serif text-lg text-ink">
           Outpos<span className="text-sage">t</span>
         </Link>
