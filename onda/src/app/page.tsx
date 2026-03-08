@@ -1,355 +1,256 @@
-"use client";
-
-import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  discoverActivityLabels,
-  mapSupabaseRetreatToDiscoverRetreat,
-  type DiscoverRetreat,
-  type DiscoverActivity,
-} from "@/lib/discover";
-import { supabase } from "@/lib/supabase";
+import Image from "next/image";
+import { Globe, CreditCard, Users, Share2, MessageCircle, BarChart2 } from "lucide-react";
 
-type SortOption = "featured" | "price-low" | "price-high" | "rating";
+const HERO_RETREATS = [
+  {
+    title: "Baja Surf & Yoga Week",
+    host: "Sarah K.",
+    location: "Baja California, Mexico",
+    price: "1,299",
+    image: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800&q=80",
+  },
+  {
+    title: "Dolomites Hiking Escape",
+    host: "Marco R.",
+    location: "Dolomites, Italy",
+    price: "2,400",
+    image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80",
+  },
+  {
+    title: "Tulum Sound Healing Retreat",
+    host: "Luna M.",
+    location: "Tulum, Mexico",
+    price: "1,899",
+    image: "https://images.unsplash.com/photo-1545389336-cf090694435e?w=800&q=80",
+  },
+];
 
-const whenLabels: Record<string, string> = {
-  "": "When",
-  weekend: "This weekend",
-  week: "Next 7 days",
-  month: "Next 30 days",
-  quarter: "Next 3 months",
-};
+const FEATURES = [
+  { Icon: Globe, title: "Beautiful booking pages", description: "A public listing page your audience will trust. Photos, itinerary, FAQs, and one-click booking." },
+  { Icon: CreditCard, title: "Payments & deposits", description: "Accept full payment or deposits. Stripe-powered. Payouts to your bank account." },
+  { Icon: Users, title: "Guest management", description: "See who's coming, dietary needs, emergency contacts, roommate requests — all in one place." },
+  { Icon: Share2, title: "Share tools", description: "Custom booking link, embeddable widget, and a branded Instagram card ready to post." },
+  { Icon: MessageCircle, title: "Message your guests", description: "Broadcast messages to all guests or filter by retreat. Built-in templates for common updates." },
+  { Icon: BarChart2, title: "Financials dashboard", description: "Track earnings, upcoming payouts, and transaction history. Know your numbers at a glance." },
+];
 
-const durationLabels: Record<string, string> = {
-  "": "Duration",
-  weekend: "Weekend",
-  week: "5–7 days",
-  long: "8+ days",
-};
-
-const priceLabels: Record<string, string> = {
-  "": "Price",
-  under1k: "Under $1k",
-  "1k-2k": "$1k–$2k",
-  "2k-3k": "$2k–$3k",
-  "3k": "$3k+",
-};
-
-const guestsLabels: Record<string, string> = {
-  "": "Who",
-  solo: "Solo",
-  small: "2–4",
-  medium: "5–8",
-  large: "9+",
-};
-
-function priceInRange(price: number, range: string): boolean {
-  if (!range) return true;
-  if (range === "under1k") return price < 1000;
-  if (range === "1k-2k") return price >= 1000 && price < 2000;
-  if (range === "2k-3k") return price >= 2000 && price < 3000;
-  if (range === "3k") return price >= 3000;
-  return true;
-}
-
-function durationMatch(retreat: DiscoverRetreat, value: string): boolean {
-  if (!value) return true;
-  return retreat.duration === value;
-}
-
-export default function DiscoverPage() {
-  const [search, setSearch] = useState("");
-  const [when, setWhen] = useState("");
-  const [duration, setDuration] = useState("");
-  const [price, setPrice] = useState("");
-  const [guests, setGuests] = useState("");
-  const [activity, setActivity] = useState<DiscoverActivity | "">("");
-  const [sort, setSort] = useState<SortOption>("featured");
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [retreats, setRetreats] = useState<DiscoverRetreat[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      setError("Database not configured");
-      return;
-    }
-    supabase
-      .from("retreats")
-      .select("id, name, location_city, location_country, activity_type, start_date, end_date, price, capacity, status, cover_image_url")
-      .eq("status", "published")
-      .then(({ data, error: err }) => {
-        setLoading(false);
-        if (err) {
-          setError(err.message);
-          return;
-        }
-        setRetreats((data ?? []).map(mapSupabaseRetreatToDiscoverRetreat));
-      });
-  }, []);
-
-  useEffect(() => {
-    function close() {
-      setOpenDropdown(null);
-    }
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, []);
-
-  const filtered = useMemo(() => {
-    let list = retreats.filter((r) => {
-      if (activity && r.activity !== activity) return false;
-      if (!durationMatch(r, duration)) return false;
-      if (!priceInRange(r.price, price)) return false;
-      if (guests && r.guests !== guests) return false;
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        if (
-          !r.title.toLowerCase().includes(q) &&
-          !r.location.toLowerCase().includes(q) &&
-          !discoverActivityLabels[r.activity].toLowerCase().includes(q)
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-
-    if (sort === "price-low") list = [...list].sort((a, b) => a.price - b.price);
-    else if (sort === "price-high") list = [...list].sort((a, b) => b.price - a.price);
-    else if (sort === "rating") list = [...list].sort((a, b) => b.rating - a.rating);
-
-    return list;
-  }, [retreats, search, when, duration, price, guests, activity, sort]);
-
-  const getRetreatHref = (r: DiscoverRetreat) => `/retreat/${r.id}`;
-
+export default function LandingPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-cream">
-      {/* Nav */}
-      <nav className="sticky top-0 z-[200] flex flex-wrap items-center gap-6 border-b border-onda-border bg-white px-8 py-3.5">
+    <div className="min-h-screen flex flex-col bg-cream">
+      {/* 1. Nav */}
+      <nav className="sticky top-0 z-[200] flex flex-wrap items-center justify-between gap-4 border-b border-onda-border bg-card-bg px-6 py-4 sm:px-8">
         <Link href="/" className="font-serif text-[22px] tracking-tight text-ink">
-          Outpos<span className="text-sage">t</span>
+          Outpost
         </Link>
-        <div className="flex min-w-[180px] max-w-[420px] flex-1 items-center rounded-full border border-transparent bg-[#F7F7F5] py-3 px-5 transition-all focus-within:border-onda-border focus-within:bg-white focus-within:shadow-md hover:bg-white hover:shadow-md">
-          <span className="mr-3 text-warm-gray">📍</span>
-          <input
-            type="text"
-            placeholder="Search destinations"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 border-none bg-transparent text-sm text-ink outline-none placeholder:text-warm-gray"
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-sm font-medium text-ink hover:text-sage">
-            For hosts
+        <div className="flex items-center gap-6">
+          <Link href="/explore" className="text-sm font-medium text-warm-gray hover:text-ink transition-colors">
+            Explore retreats
+          </Link>
+          <Link href="/login" className="text-sm font-medium text-warm-gray hover:text-ink transition-colors">
+            Log in
           </Link>
           <Link
-            href="/dashboard"
-            className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-sage"
+            href="/signup"
+            className="rounded-full bg-sage px-5 py-2.5 text-sm font-semibold text-white hover:bg-sage-light transition-colors"
           >
             List your retreat
           </Link>
         </div>
       </nav>
 
-      {/* Filter bar */}
-      <div className="relative sticky top-[57px] z-[150] border-b border-onda-border bg-white px-8">
-        <div className="flex flex-wrap items-center gap-2 overflow-x-auto py-3 scrollbar-none">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "when" ? null : "when"); }}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
-              when ? "border-ink bg-ink text-white hover:bg-ink/90" : "border-onda-border bg-transparent text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
-            }`}
-          >
-            {whenLabels[when] || "When"} <span className="opacity-80">▼</span>
-          </button>
-          <div className="h-6 w-px shrink-0 bg-onda-border" />
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "duration" ? null : "duration"); }}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
-              duration ? "border-ink bg-ink text-white" : "border-onda-border bg-transparent text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
-            }`}
-          >
-            {durationLabels[duration] || "Duration"} <span className="opacity-80">▼</span>
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "price" ? null : "price"); }}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
-              price ? "border-ink bg-ink text-white" : "border-onda-border bg-transparent text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
-            }`}
-          >
-            {priceLabels[price] || "Price"} <span className="opacity-80">▼</span>
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "guests" ? null : "guests"); }}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
-              guests ? "border-ink bg-ink text-white" : "border-onda-border bg-transparent text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
-            }`}
-          >
-            {guestsLabels[guests] || "Who"} <span className="opacity-80">▼</span>
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "activity" ? null : "activity"); }}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition-colors ${
-              activity ? "border-ink bg-ink text-white" : "border-onda-border bg-transparent text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
-            }`}
-          >
-            {activity ? discoverActivityLabels[activity] : "Activity"} <span className="opacity-80">▼</span>
-          </button>
-          <div className="h-6 w-px shrink-0 bg-onda-border" />
-          <div className="ml-auto flex items-center gap-4">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortOption)}
-              className="rounded-lg border border-onda-border bg-white py-2 pl-4 pr-10 text-sm text-ink focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
-            >
-              <option value="featured">Sort: Recommended</option>
-              <option value="price-low">Price: low to high</option>
-              <option value="price-high">Price: high to low</option>
-              <option value="rating">Top rated</option>
-            </select>
-            <span className="text-sm text-warm-gray">
-              {filtered.length} retreat{filtered.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        </div>
-
-        {/* Dropdowns */}
-        {openDropdown === "when" && (
-          <div className="absolute left-8 right-8 top-full z-[300] mt-1 max-w-xs rounded-xl border border-onda-border bg-white py-3 shadow-lg" onClick={(e) => e.stopPropagation()}>
-            {(["", "weekend", "week", "month", "quarter"] as const).map((v) => (
-              <label key={v || "any"} className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
-                <input type="radio" name="when" checked={when === v} onChange={() => { setWhen(v); setOpenDropdown(null); }} className="accent-sage" />
-                <span className="text-sm">{whenLabels[v]}</span>
-              </label>
-            ))}
-          </div>
-        )}
-        {openDropdown === "duration" && (
-          <div className="absolute left-8 top-full z-[300] mt-1 min-w-[200px] rounded-xl border border-onda-border bg-white py-3 shadow-lg" onClick={(e) => e.stopPropagation()}>
-            {(["", "weekend", "week", "long"] as const).map((v) => (
-              <label key={v || "any"} className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
-                <input type="radio" name="duration" checked={duration === v} onChange={() => { setDuration(v); setOpenDropdown(null); }} className="accent-sage" />
-                <span className="text-sm">{durationLabels[v]}</span>
-              </label>
-            ))}
-          </div>
-        )}
-        {openDropdown === "price" && (
-          <div className="absolute left-8 top-full z-[300] mt-1 min-w-[200px] rounded-xl border border-onda-border bg-white py-3 shadow-lg" onClick={(e) => e.stopPropagation()}>
-            {(["", "under1k", "1k-2k", "2k-3k", "3k"] as const).map((v) => (
-              <label key={v || "any"} className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
-                <input type="radio" name="price" checked={price === v} onChange={() => { setPrice(v); setOpenDropdown(null); }} className="accent-sage" />
-                <span className="text-sm">{priceLabels[v]}</span>
-              </label>
-            ))}
-          </div>
-        )}
-        {openDropdown === "guests" && (
-          <div className="absolute left-8 top-full z-[300] mt-1 min-w-[200px] rounded-xl border border-onda-border bg-white py-3 shadow-lg" onClick={(e) => e.stopPropagation()}>
-            {(["", "solo", "small", "medium", "large"] as const).map((v) => (
-              <label key={v || "any"} className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
-                <input type="radio" name="guests" checked={guests === v} onChange={() => { setGuests(v); setOpenDropdown(null); }} className="accent-sage" />
-                <span className="text-sm">{guestsLabels[v]}</span>
-              </label>
-            ))}
-          </div>
-        )}
-        {openDropdown === "activity" && (
-          <div className="absolute left-8 top-full z-[300] mt-1 min-w-[220px] rounded-xl border border-onda-border bg-white py-3 shadow-lg" onClick={(e) => e.stopPropagation()}>
-            {(["yoga", "surf", "hiking", "writing", "wellness", "adventure"] as const).map((v) => (
-              <label key={v} className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
-                <input type="radio" name="activity" checked={activity === v} onChange={() => { setActivity(v); setOpenDropdown(null); }} className="accent-sage" />
-                <span className="text-sm">{discoverActivityLabels[v]}</span>
-              </label>
-            ))}
-            <label className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-[#F7F7F5]">
-              <input type="radio" name="activity" checked={activity === ""} onChange={() => { setActivity(""); setOpenDropdown(null); }} className="accent-sage" />
-              <span className="text-sm">All activities</span>
-            </label>
-          </div>
-        )}
-      </div>
-
-      {/* Main */}
-      <main className="mx-auto w-full max-w-[1280px] flex-1 px-8 py-6 pb-12">
-        {error && (
-          <div className="py-16 text-center text-warm-gray">
-            {error}
-          </div>
-        )}
-        {loading && !error && (
-          <div className="py-16 text-center text-warm-gray">
-            Loading retreats…
-          </div>
-        )}
-        {!loading && !error && (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-          {filtered.map((r) => (
+      {/* 2. Hero */}
+      <section className="bg-cream px-6 pt-24 pb-20 sm:px-8 sm:pt-24 sm:pb-28">
+        <div className="mx-auto max-w-6xl">
+          <h1 className="font-serif text-5xl leading-tight tracking-tight text-ink sm:text-[64px] lg:text-7xl">
+            Your retreat, beautifully managed
+          </h1>
+          <p className="mt-6 max-w-lg text-lg text-warm-gray font-sans">
+            Outpost gives creators a booking page, guest management, and payment tools — purpose-built for multi-day retreat experiences.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
-              key={r.id}
-              href={getRetreatHref(r)}
-              className="block overflow-hidden rounded-2xl border border-transparent bg-white text-left no-underline text-inherit transition-all hover:-translate-y-0.5 hover:border-onda-border hover:shadow-lg"
+              href="/signup"
+              className="inline-flex rounded-full bg-sage px-6 py-3 text-sm font-semibold text-white hover:bg-sage-light transition-colors"
             >
-              <div className="flex h-[200px] shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br from-sage to-sage-light text-5xl">
-                {r.coverImageUrl ? (
-                  <img src={r.coverImageUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  r.emoji
-                )}
-              </div>
-              <div className="p-4">
-                <div className="mb-2 flex items-start justify-between gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-sage">
-                    {discoverActivityLabels[r.activity]}
-                  </span>
-                  <span className="text-[13px] font-medium text-ink">
-                    {r.rating} <span className="font-normal text-warm-gray">· {r.reviews} reviews</span>
-                  </span>
-                </div>
-                <h3 className="font-serif text-lg font-normal leading-snug text-ink">{r.title}</h3>
-                <div className="mt-1.5 text-sm text-warm-gray">{r.location}</div>
-                <div className="mt-2.5 flex flex-wrap gap-2.5 text-[13px] text-warm-gray">
-                  <span>{r.days} days</span>
-                  <span>{r.meta}</span>
-                </div>
-                <div className="mt-3 text-[15px] font-semibold text-ink">
-                  ${r.price.toLocaleString()} <span className="font-normal text-warm-gray">per person</span>
-                </div>
-              </div>
+              List your retreat free →
             </Link>
-          ))}
-        </div>
-        )}
-        {!loading && !error && filtered.length === 0 && (
-          <div className="py-16 text-center text-warm-gray">
-            No retreats match your filters. Try changing your selection.
+            <Link
+              href="/explore"
+              className="inline-flex rounded-full border-2 border-onda-border bg-transparent px-6 py-3 text-sm font-semibold text-ink hover:border-warm-gray hover:bg-card-bg transition-colors"
+            >
+              Browse retreats
+            </Link>
           </div>
-        )}
-      </main>
+          <p className="mt-4 text-sm text-warm-gray">
+            Free to start · No credit card required
+          </p>
 
-      {/* Footer */}
-      <footer className="mt-auto flex flex-wrap items-center justify-between gap-4 border-t border-onda-border bg-white px-8 py-5">
-        <Link href="/" className="font-serif text-lg text-ink">
-          Outpos<span className="text-sage">t</span>
-        </Link>
-        <div className="flex gap-6">
-          <Link href="/dashboard" className="text-[13px] text-warm-gray hover:text-ink">
-            For hosts
-          </Link>
-          <a href="#" className="text-[13px] text-warm-gray hover:text-ink">Privacy</a>
-          <a href="#" className="text-[13px] text-warm-gray hover:text-ink">Terms</a>
+          {/* Hero retreat cards */}
+          <div className="mt-20 grid grid-cols-1 gap-8 sm:grid-cols-3">
+            {HERO_RETREATS.map((r) => (
+              <Link
+                key={r.title}
+                href="/explore"
+                className="group block overflow-hidden rounded-2xl border border-onda-border bg-card-bg text-left no-underline text-inherit transition-all hover:shadow-lg hover:-translate-y-0.5"
+              >
+                <div className="h-48 min-h-[12rem] overflow-hidden bg-onda-border relative">
+                  <Image
+                    src={r.image}
+                    alt=""
+                    fill
+                    className="object-cover transition-transform group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, 33vw"
+                  />
+                </div>
+                <div className="p-5">
+                  <h3 className="font-serif text-lg font-normal text-ink">{r.title}</h3>
+                  <p className="mt-1 text-sm text-warm-gray">{r.host} · {r.location}</p>
+                  <p className="mt-2 text-[15px] font-semibold text-ink">
+                    ${r.price} <span className="font-normal text-warm-gray">per person</span>
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
-        <span className="text-xs text-warm-gray">© 2026 Outpost</span>
+      </section>
+
+      {/* 3. Social proof bar */}
+      <section className="border-t border-onda-border bg-[#EDE8DF] py-6">
+        <p className="text-center text-sm text-warm-gray font-sans">
+          Built for surf camps · yoga retreats · hiking trips · sound healing · creative workshops · wellness escapes
+        </p>
+      </section>
+
+      {/* 4. How it works */}
+      <section className="border-t border-onda-border bg-card-bg px-6 py-24 sm:px-8">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="font-serif text-3xl tracking-tight text-ink sm:text-4xl">
+            From idea to sold out in minutes
+          </h2>
+          <div className="mt-12 grid gap-10 sm:grid-cols-3">
+            <div>
+              <span className="font-serif text-3xl text-clay">01</span>
+              <h3 className="mt-3 font-sans text-lg font-semibold text-ink">
+                Create your retreat listing
+              </h3>
+              <p className="mt-2 text-warm-gray font-sans">
+                Add your dates, itinerary, pricing, and photos. Your public booking page is live instantly.
+              </p>
+            </div>
+            <div>
+              <span className="font-serif text-3xl text-clay">02</span>
+              <h3 className="mt-3 font-sans text-lg font-semibold text-ink">
+                Share with your audience
+              </h3>
+              <p className="mt-2 text-warm-gray font-sans">
+                Get a custom booking link and a ready-to-post Instagram card. One tap to share with your followers.
+              </p>
+            </div>
+            <div>
+              <span className="font-serif text-3xl text-clay">03</span>
+              <h3 className="mt-3 font-sans text-lg font-semibold text-ink">
+                Manage everything in one place
+              </h3>
+              <p className="mt-2 text-warm-gray font-sans">
+                Guest list, payments, messages, and waivers — all in your Outpost dashboard.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Features */}
+      <section className="border-t border-onda-border bg-cream px-6 py-24 sm:px-8">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="font-serif text-3xl tracking-tight text-ink sm:text-4xl">
+            Everything you need, nothing you don&apos;t
+          </h2>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((f) => {
+              const Icon = f.Icon;
+              return (
+                <div
+                  key={f.title}
+                  className="rounded-xl border border-onda-border bg-card-bg p-6 transition-shadow hover:shadow-lg"
+                >
+                  <Icon className="h-8 w-8 text-sage" aria-hidden />
+                  <h3 className="mt-3 font-sans text-lg font-semibold text-ink">{f.title}</h3>
+                  <p className="mt-2 text-sm text-warm-gray font-sans">{f.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 6. Pricing */}
+      <section className="border-t border-onda-border bg-card-bg px-6 py-24 sm:px-8">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="font-serif text-3xl tracking-tight text-ink sm:text-4xl">
+            Start free. Grow with Outpost.
+          </h2>
+          <div className="mt-12 grid gap-6 sm:grid-cols-3 items-stretch">
+            <div className="rounded-2xl border border-onda-border bg-card-bg p-6 flex flex-col">
+              <h3 className="font-sans text-lg font-semibold text-ink">Free</h3>
+              <p className="mt-2 font-serif text-2xl text-ink">$0<span className="text-base font-sans font-normal text-warm-gray">/mo</span></p>
+              <p className="mt-1 text-sm text-warm-gray">10% commission</p>
+              <p className="mt-4 text-sm text-ink flex-1">Unlimited retreats, booking page, guest management</p>
+            </div>
+            <div className="rounded-2xl border-2 border-sage bg-card-bg p-6 flex flex-col shadow-lg relative sm:-mt-2 sm:mb-2">
+              <h3 className="font-sans text-lg font-semibold text-ink">Pro</h3>
+              <p className="mt-2 font-serif text-2xl text-ink">$49<span className="text-base font-sans font-normal text-warm-gray">/mo</span></p>
+              <p className="mt-1 text-sm text-warm-gray">5% commission</p>
+              <p className="mt-4 text-sm text-ink flex-1">Everything in Free + priority support, custom domain</p>
+            </div>
+            <div className="rounded-2xl border border-onda-border bg-card-bg p-6 flex flex-col">
+              <h3 className="font-sans text-lg font-semibold text-ink">Studio</h3>
+              <p className="mt-2 font-serif text-2xl text-ink">$149<span className="text-base font-sans font-normal text-warm-gray">/mo</span></p>
+              <p className="mt-1 text-sm text-warm-gray">3% commission</p>
+              <p className="mt-4 text-sm text-ink flex-1">Everything in Pro + team seats, white-label options</p>
+            </div>
+          </div>
+          <p className="mt-6 text-center text-sm text-warm-gray">
+            First 60 days free on any paid plan. Stripe fees (2.9% + 30¢) are passed through.
+          </p>
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/signup"
+              className="inline-flex rounded-full bg-sage px-6 py-3 text-sm font-semibold text-white hover:bg-sage-light transition-colors"
+            >
+              Get started for free →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. Final CTA */}
+      <section className="border-t border-onda-border bg-ink px-6 py-24 sm:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="font-serif text-3xl tracking-tight text-card-bg sm:text-4xl">
+            Ready to fill your next retreat?
+          </h2>
+          <p className="mt-4 text-lg text-card-bg/90 font-sans">
+            Join hosts already using Outpost to manage bookings, guests, and payments.
+          </p>
+          <Link
+            href="/signup"
+            className="mt-8 inline-flex rounded-full bg-sage px-6 py-3 text-sm font-semibold text-white hover:bg-sage-light transition-colors"
+          >
+            List your retreat free →
+          </Link>
+        </div>
+      </section>
+
+      {/* 8. Footer */}
+      <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-onda-border bg-card-bg px-6 py-6 sm:px-8">
+        <div className="flex gap-6 text-sm text-warm-gray">
+          <Link href="/dashboard" className="hover:text-ink transition-colors">For hosts</Link>
+          <a href="#" className="hover:text-ink transition-colors">Privacy</a>
+          <a href="#" className="hover:text-ink transition-colors">Terms</a>
+        </div>
+        <span className="text-sm text-warm-gray">© 2026 Outpost</span>
       </footer>
     </div>
   );
