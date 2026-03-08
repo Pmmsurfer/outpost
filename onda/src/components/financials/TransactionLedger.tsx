@@ -120,59 +120,61 @@ export function TransactionLedger({
 
   return (
     <section className={`rounded-2xl border border-onda-border bg-card-bg overflow-hidden ${className}`}>
-      <div className="flex flex-wrap items-center justify-between gap-4 p-6 border-b border-onda-border">
+      <div className="flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:p-6 border-b border-onda-border">
         <div>
-          <h2 className="font-serif text-xl text-ink">All transactions</h2>
+          <h2 className="font-serif text-lg sm:text-xl text-ink">All transactions</h2>
           <p className="mt-1 text-sm text-warm-gray">Every booking payment in detail</p>
         </div>
         <button
           type="button"
           onClick={exportCsv}
-          className="rounded-lg border-2 border-onda-border bg-transparent px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink"
+          className="rounded-lg border-2 border-onda-border bg-transparent px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink min-h-[44px] sm:min-h-0 flex items-center justify-center"
         >
           Export CSV
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-3 p-4 border-b border-onda-border bg-table-header">
+      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 border-b border-onda-border bg-table-header">
         <input
           type="text"
           placeholder="Search by guest name"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          className="rounded-lg border border-onda-border bg-white px-3 py-2 text-sm text-ink placeholder:text-warm-gray focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+          className="w-full min-h-[44px] sm:min-h-0 sm:w-auto rounded-lg border border-onda-border bg-white px-3 py-2 text-sm text-ink placeholder:text-warm-gray focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
         />
-        <select
-          value={retreatFilter}
-          onChange={(e) => { setRetreatFilter(e.target.value); setPage(0); }}
-          className="min-w-[180px] rounded-lg border border-onda-border bg-white px-3 py-2 text-sm text-ink focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
-        >
-          <option value="">All retreats</option>
-          {retreats.map((r) => (
-            <option key={r.id} value={r.id}>{r.name}</option>
-          ))}
-        </select>
-        <select
-          value={typeFilter}
-          onChange={(e) => { setTypeFilter(e.target.value as typeof typeFilter); setPage(0); }}
-          className="rounded-lg border border-onda-border bg-white px-3 py-2 text-sm text-ink focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
-        >
-          <option value="all">All types</option>
-          <option value="deposit">Deposit</option>
-          <option value="balance">Balance</option>
-          <option value="refund">Refund</option>
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value as typeof statusFilter); setPage(0); }}
-          className="rounded-lg border border-onda-border bg-white px-3 py-2 text-sm text-ink focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
-        >
-          <option value="all">All statuses</option>
-          <option value="paid">Paid</option>
-          <option value="pending">Pending</option>
-          <option value="refunded">Refunded</option>
-        </select>
+        <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:gap-3">
+          <select
+            value={retreatFilter}
+            onChange={(e) => { setRetreatFilter(e.target.value); setPage(0); }}
+            className="min-h-[44px] w-full min-w-0 rounded-lg border border-onda-border bg-white px-3 py-2 text-sm text-ink focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20 sm:min-h-0 sm:min-w-[180px]"
+          >
+            <option value="">All retreats</option>
+            {retreats.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+          <select
+            value={typeFilter}
+            onChange={(e) => { setTypeFilter(e.target.value as typeof typeFilter); setPage(0); }}
+            className="min-h-[44px] w-full min-w-0 rounded-lg border border-onda-border bg-white px-3 py-2 text-sm text-ink focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20 sm:min-h-0"
+          >
+            <option value="all">All types</option>
+            <option value="deposit">Deposit</option>
+            <option value="balance">Balance</option>
+            <option value="refund">Refund</option>
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value as typeof statusFilter); setPage(0); }}
+            className="min-h-[44px] w-full min-w-0 rounded-lg border border-onda-border bg-white px-3 py-2 text-sm text-ink focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20 sm:min-h-0"
+          >
+            <option value="all">All statuses</option>
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="refunded">Refunded</option>
+          </select>
+        </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
         <table className="w-full min-w-[900px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-onda-border bg-table-header">
@@ -233,16 +235,16 @@ export function TransactionLedger({
         </table>
       </div>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between gap-4 border-t border-onda-border px-6 py-3">
-          <p className="text-sm text-warm-gray">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 border-t border-onda-border px-4 py-3 sm:px-6">
+          <p className="text-sm text-warm-gray order-2 sm:order-1">
             Showing {page * PER_PAGE + 1}–{Math.min((page + 1) * PER_PAGE, filtered.length)} of {filtered.length}
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 order-1 sm:order-2">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="rounded-lg border border-onda-border bg-white px-3 py-1.5 text-sm font-medium text-ink disabled:opacity-50 hover:border-ink"
+              className="min-h-[44px] flex-1 sm:flex-none rounded-lg border border-onda-border bg-white px-3 py-2 text-sm font-medium text-ink disabled:opacity-50 hover:border-ink"
             >
               Previous
             </button>
@@ -250,7 +252,7 @@ export function TransactionLedger({
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="rounded-lg border border-onda-border bg-white px-3 py-1.5 text-sm font-medium text-ink disabled:opacity-50 hover:border-ink"
+              className="min-h-[44px] flex-1 sm:flex-none rounded-lg border border-onda-border bg-white px-3 py-2 text-sm font-medium text-ink disabled:opacity-50 hover:border-ink"
             >
               Next
             </button>

@@ -133,19 +133,19 @@ export default function FinancialsClient({
   }, [bookings, retreats, dateRange, hostPlan]);
 
   return (
-    <div className="mx-auto max-w-[1100px]">
-      <header className="mb-10 flex flex-wrap items-start justify-between gap-4">
+    <div className="mx-auto max-w-[1100px] px-4 sm:px-0">
+      <header className="mb-6 sm:mb-10 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-serif text-[28px] tracking-tight text-ink">Financials</h1>
+          <h1 className="font-serif text-[24px] sm:text-[28px] tracking-tight text-ink">Financials</h1>
           <p className="mt-2 text-warm-gray">Your earnings and payouts</p>
         </div>
-        <div className="flex flex-wrap gap-1 rounded-full border border-onda-border bg-card-bg p-1">
+        <div className="flex overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap gap-1 rounded-full border border-onda-border bg-card-bg p-1 [-webkit-overflow-scrolling:touch]">
           {DATE_RANGE_OPTIONS.map((opt) => (
             <button
               key={opt.key}
               type="button"
               onClick={() => setDateRange(opt.key)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-3 py-2 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 sm:px-4 ${
                 dateRange === opt.key
                   ? "bg-sage text-white"
                   : "text-ink hover:bg-onda-border/30"

@@ -130,18 +130,18 @@ export function PhotoUpload({
           onDragOver={(e) => { e.preventDefault(); setCoverDragging(true); }}
           onDragLeave={() => setCoverDragging(false)}
           onDrop={handleCoverDrop}
-          className={`flex min-h-[180px] flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+          className={`flex min-h-[140px] sm:min-h-[180px] flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 sm:p-6 text-center transition-colors ${
             coverDragging ? "border-[#4A6741] bg-[#4A6741]/5" : "border-[#D8D2C4] bg-white"
           } ${disabled || uploading ? "pointer-events-none opacity-60" : ""}`}
         >
           {coverUrl ? (
             <div className="relative w-full max-w-sm">
-              <img src={coverUrl} alt="Cover" className="h-40 w-full rounded-lg object-cover" />
+              <img src={coverUrl} alt="Cover" className="h-32 sm:h-40 w-full rounded-lg object-cover" />
               {!disabled && (
                 <button
                   type="button"
                   onClick={() => onCoverChange("")}
-                  className="absolute right-2 top-2 rounded-full bg-[#1A1A14]/80 px-2 py-1 text-xs text-white hover:bg-[#1A1A14]"
+                  className="absolute right-2 top-2 rounded-full bg-[#1A1A14]/80 px-2 py-1 text-xs text-white hover:bg-[#1A1A14] min-h-[36px] min-w-[60px] sm:min-h-0 sm:min-w-0"
                 >
                   Remove
                 </button>
@@ -149,13 +149,16 @@ export function PhotoUpload({
             </div>
           ) : (
             <>
-              <p className="text-sm text-[#8A8478]">Drag and drop or click to upload</p>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleCoverFile}
-                className="mt-2 text-sm text-[#8A8478] file:mr-2 file:rounded-lg file:border-0 file:bg-[#F5F0E8] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#1A1A14]"
-              />
+              <p className="text-sm text-[#8A8478]">Drag and drop or tap to upload</p>
+              <label className="mt-3 inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-lg border-0 bg-[#F5F0E8] px-4 py-2.5 text-sm font-semibold text-[#1A1A14] hover:bg-[#E8E2D8]">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverFile}
+                  className="sr-only"
+                />
+                Choose file
+              </label>
             </>
           )}
         </div>
@@ -166,7 +169,7 @@ export function PhotoUpload({
           <button
             type="button"
             onClick={onGalleryExpand}
-            className="flex w-full items-center justify-center rounded-xl border border-dashed border-[#D8D2C4] bg-[#FDFAF5]/60 px-6 py-5 text-[#4A6741] transition-colors hover:border-[#4A6741]/50 hover:bg-[#F5F0E8]/50"
+            className="flex w-full min-h-[44px] items-center justify-center rounded-xl border border-dashed border-[#D8D2C4] bg-[#FDFAF5]/60 px-6 py-5 text-[#4A6741] transition-colors hover:border-[#4A6741]/50 hover:bg-[#F5F0E8]/50"
           >
             {galleryUrls.length > 0 ? (
               <span className="font-medium">{galleryUrls.length} photos added ✓</span>
@@ -179,20 +182,20 @@ export function PhotoUpload({
             onDragOver={(e) => { e.preventDefault(); setGalleryDragging(true); }}
             onDragLeave={() => setGalleryDragging(false)}
             onDrop={handleGalleryDrop}
-            className={`flex min-h-[120px] flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+            className={`flex min-h-[100px] sm:min-h-[120px] flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 sm:p-6 text-center transition-colors ${
               galleryDragging ? "border-[#4A6741] bg-[#4A6741]/5" : "border-[#D8D2C4] bg-white"
             } ${disabled || uploading || galleryUrls.length >= 8 ? "pointer-events-none opacity-60" : ""}`}
           >
             {galleryUrls.length > 0 && (
-              <div className="mb-4 flex flex-wrap gap-2">
+              <div className="mb-4 flex flex-wrap gap-2 justify-center">
                 {galleryUrls.map((url, i) => (
                   <div key={i} className="relative">
-                    <img src={url} alt="" className="h-20 w-20 rounded-lg object-cover" />
+                    <img src={url} alt="" className="h-16 w-16 sm:h-20 sm:w-20 rounded-lg object-cover" />
                     {!disabled && (
                       <button
                         type="button"
                         onClick={() => removeGallery(i)}
-                        className="absolute -right-1 -top-1 rounded-full bg-[#1A1A14]/80 p-1 text-white hover:bg-[#1A1A14]"
+                        className="absolute -right-1 -top-1 rounded-full bg-[#1A1A14]/80 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center text-sm font-bold text-white hover:bg-[#1A1A14]"
                       >
                         ×
                       </button>
@@ -203,14 +206,17 @@ export function PhotoUpload({
             )}
             {galleryUrls.length < 8 && (
               <>
-                <p className="text-sm text-[#8A8478]">Drag and drop or click to add photos</p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleGalleryFile}
-                  className="mt-2 text-sm text-[#8A8478] file:mr-2 file:rounded-lg file:border-0 file:bg-[#F5F0E8] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#1A1A14]"
-                />
+                <p className="text-sm text-[#8A8478]">Drag and drop or tap to add photos</p>
+                <label className="mt-3 inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-lg border-0 bg-[#F5F0E8] px-4 py-2.5 text-sm font-semibold text-[#1A1A14] hover:bg-[#E8E2D8]">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleGalleryFile}
+                    className="sr-only"
+                  />
+                  Choose files
+                </label>
               </>
             )}
           </div>

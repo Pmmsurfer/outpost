@@ -317,7 +317,7 @@ export function RetreatForm() {
       />
 
       {/* Mode toggle */}
-      <div className="border-b border-[#D8D2C4] px-6 py-4" style={{ background: "#FDFAF5" }}>
+      <div className="border-b border-[#D8D2C4] px-4 py-4 sm:px-6" style={{ background: "#FDFAF5" }}>
         <div className="mx-auto flex max-w-2xl items-center justify-center gap-2">
           <button
             type="button"
@@ -359,7 +359,7 @@ export function RetreatForm() {
         </div>
       )}
 
-      <div className="mx-auto max-w-2xl space-y-8 px-6 py-10 pb-24">
+      <div className="mx-auto max-w-2xl space-y-8 px-4 py-10 pb-24 sm:px-6">
         {/* 1. BASICS */}
         <FormSection title="Basics" required>
           <div className="space-y-6">
