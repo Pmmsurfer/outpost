@@ -193,16 +193,34 @@ export default function ExplorePage() {
     <div className="flex min-h-screen flex-col bg-cream">
       {/* Nav — design system: cream bg, border, ink wordmark, sage CTA */}
       <nav
-        className="sticky top-0 z-[200] flex flex-wrap items-center gap-3 border-b px-4 py-3 sm:gap-4 sm:px-6 sm:py-3.5 md:px-8"
+        className="sticky top-0 z-[200] flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 sm:px-6 sm:py-3.5 md:px-8"
         style={{ background: "#F5F0E8", borderBottomWidth: 1, borderBottomColor: "#D8D2C4" }}
       >
-        <Link
-          href="/"
-          className="font-serif text-[22px] tracking-tight"
-          style={{ color: "#1A1A14" }}
-        >
-          Outpos<span className="text-sage">t</span>
-        </Link>
+        <div className="flex min-w-0 items-center justify-between gap-2 sm:contents">
+          <Link
+            href="/"
+            className="font-serif text-[22px] tracking-tight shrink-0"
+            style={{ color: "#1A1A14" }}
+          >
+            Outpos<span className="text-sage">t</span>
+          </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium hover:opacity-80 shrink-0"
+              style={{ color: "#1A1A14" }}
+            >
+              For hosts
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-full px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 min-h-[44px] flex items-center justify-center shrink-0 sm:px-5"
+              style={{ backgroundColor: "#4A6741" }}
+            >
+              List your retreat
+            </Link>
+          </div>
+        </div>
         <div className="flex min-w-0 flex-1 items-center rounded-full border border-transparent bg-white/80 py-2.5 px-4 transition-all focus-within:border-[#D8D2C4] focus-within:bg-white focus-within:shadow-md hover:bg-white hover:shadow-md sm:min-w-[140px] sm:py-3 sm:px-5">
           <span className="mr-3 text-warm-gray">📍</span>
           <input
@@ -210,10 +228,10 @@ export default function ExplorePage() {
             placeholder="Search destinations, activities, or hosts"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 border-none bg-transparent text-sm text-ink outline-none placeholder:text-warm-gray"
+            className="flex-1 min-w-0 border-none bg-transparent text-sm text-ink outline-none placeholder:text-warm-gray"
           />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="hidden items-center gap-3 sm:flex">
           <Link
             href="/dashboard"
             className="text-sm font-medium hover:opacity-80"
@@ -223,7 +241,7 @@ export default function ExplorePage() {
           </Link>
           <Link
             href="/dashboard"
-            className="rounded-full px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 sm:px-5 sm:py-2.5 min-h-[44px] flex items-center justify-center"
+            className="rounded-full px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"
             style={{ backgroundColor: "#4A6741" }}
           >
             List your retreat
@@ -231,9 +249,10 @@ export default function ExplorePage() {
         </div>
       </nav>
 
-      {/* Filter bar — unchanged */}
-      <div className="relative sticky top-[53px] z-[150] border-b border-onda-border bg-white px-4 sm:top-[57px] sm:px-6 md:px-8">
-        <div className="flex flex-wrap items-center gap-2 overflow-x-auto py-3 scrollbar-none [-webkit-overflow-scrolling:touch]">
+      {/* Filter bar — mobile: two rows (scrollable filters + sort/count); desktop: single row */}
+      <div className="relative sticky top-[96px] z-[150] border-b border-onda-border bg-white px-4 sm:top-[57px] sm:px-6 md:px-8">
+        <div className="flex flex-col gap-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pr-2 [-webkit-overflow-scrolling:touch] pb-1 sm:pb-0 sm:pr-0 sm:flex-1 sm:min-w-0">
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === "when" ? null : "when"); }}
@@ -281,18 +300,19 @@ export default function ExplorePage() {
             {activity ? discoverActivityLabels[activity] : "Activity"} <span className="opacity-80">▼</span>
           </button>
           <div className="h-6 w-px shrink-0 bg-onda-border" />
-          <div className="ml-auto flex items-center gap-4">
+          </div>
+          <div className="flex w-full items-center justify-between gap-4 sm:ml-auto sm:w-auto">
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortOption)}
-              className="rounded-lg border border-onda-border bg-white py-2 pl-4 pr-10 text-sm text-ink focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+              className="min-h-[44px] flex-1 max-w-[220px] rounded-lg border border-onda-border bg-white py-2 pl-4 pr-10 text-sm text-ink focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20 sm:min-h-0 sm:flex-none"
             >
               <option value="featured">Sort: Recommended</option>
               <option value="price-low">Price: low to high</option>
               <option value="price-high">Price: high to low</option>
               <option value="rating">Top rated</option>
             </select>
-            <span className="text-sm text-warm-gray">
+            <span className="text-sm text-warm-gray shrink-0">
               {filtered.length} retreat{filtered.length !== 1 ? "s" : ""}
             </span>
           </div>
