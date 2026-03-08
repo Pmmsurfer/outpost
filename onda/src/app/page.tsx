@@ -66,7 +66,7 @@ export default function LandingPage() {
             Your retreat, beautifully managed
           </h1>
           <p className="mt-6 max-w-lg text-lg text-warm-gray font-sans">
-            Outpost gives creators a booking page, guest management, and payment tools — purpose-built for multi-day retreat experiences.
+            Outpost gives hosts a booking page, guest management, and payment tools — purpose-built for multi-day retreat experiences.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
