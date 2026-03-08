@@ -105,7 +105,7 @@ export default function RetreatDetailPage() {
         if (!error && data) setSupabaseRetreat(mapSupabaseRetreat(data as Record<string, unknown>));
       });
     return () => { mounted = false; };
-  }, [id, retreatFromMock]);
+  }, [id, retreatFromMock, updated]);
 
   const allBookingsForRetreat = mockBookings.filter((b) => b.retreatId === id);
   const guests = allBookingsForRetreat.filter((b) => b.status !== "cancelled");

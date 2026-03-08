@@ -335,10 +335,16 @@ export default function EditRetreatPage() {
           accommodation_notes: accommodationNote.trim() || null,
         })
         .eq("id", id)
-        .then(({ error }) => {
+        .select("id, name")
+        .maybeSingle()
+        .then(({ data, error }) => {
           setSubmitting(false);
           if (error) {
             setErrors((prev) => ({ ...prev, submit: error.message }));
+            return;
+          }
+          if (!data) {
+            setErrors((prev) => ({ ...prev, submit: "Update did not apply. Make sure you're the retreat host." }));
             return;
           }
           router.push(`/dashboard/retreats/${id}?updated=1`);
