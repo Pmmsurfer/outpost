@@ -24,7 +24,7 @@ function isProtectedPath(pathname: string): boolean {
 }
 
 export async function middleware(req: NextRequest) {
-  let res = NextResponse.next({ request: req });
+  const res = NextResponse.next({ request: req });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return res;
