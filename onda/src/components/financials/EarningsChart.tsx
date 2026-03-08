@@ -68,7 +68,11 @@ export function EarningsChart({ monthlyData, className = "" }: EarningsChartProp
                 border: "1px solid #D8D2C4",
                 borderRadius: "8px",
               }}
-              formatter={(value: number) => [formatCurrency(value), ""]}
+              formatter={(value: unknown) =>
+                typeof value === "number"
+                  ? [formatCurrency(value), ""]
+                  : ["", ""]
+              }
               labelFormatter={(label) => label}
             />
             <Legend
