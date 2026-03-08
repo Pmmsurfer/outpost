@@ -204,7 +204,7 @@ export default function ExplorePage() {
           >
             Outpos<span className="text-sage">t</span>
           </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:hidden sm:gap-3">
             <Link
               href="/dashboard"
               className="text-sm font-medium hover:opacity-80 shrink-0"

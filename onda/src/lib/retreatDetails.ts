@@ -40,6 +40,7 @@ export interface RetreatDetail {
   covidPolicy?: string;
   contactEmail?: string;
   coverImageUrl?: string | null;
+  galleryUrls?: string[];
 }
 
 /** No mock overrides; detail content comes from Supabase/retreat data. */
@@ -137,6 +138,7 @@ interface SupabaseRetreatDetailRow {
   contact_email: string | null;
   status?: string;
   cover_image_url?: string | null;
+  gallery_urls?: string[] | null;
 }
 
 const ACTIVITY_TO_LABEL: Record<string, string> = {
@@ -236,6 +238,7 @@ function mapRowToRetreatDetail(row: SupabaseRetreatDetailRow): RetreatDetail {
     covidPolicy: row.covid_policy ?? undefined,
     contactEmail: row.contact_email ?? undefined,
     coverImageUrl: row.cover_image_url ?? undefined,
+    galleryUrls: Array.isArray(row.gallery_urls) ? row.gallery_urls : [],
   };
 }
 

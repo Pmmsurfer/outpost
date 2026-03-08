@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { getRetreatDetailFromSupabase } from "@/lib/retreatDetails";
 import RetreatDetailClient from "./RetreatDetailClient";
 
+/** Always fetch fresh data so updated cover/gallery photos show immediately. */
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {
@@ -63,6 +66,21 @@ export default async function RetreatDetailPage({
             detail.emoji
           )}
         </div>
+
+        {/* Photo gallery */}
+        {(detail.galleryUrls?.length ?? 0) > 0 && (
+          <section className="mt-8">
+            <h2 className="font-serif text-2xl text-ink">Photos</h2>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4">
+              {detail.galleryUrls!.map((url, i) => (
+                <div key={i} className="aspect-[4/3] overflow-hidden rounded-xl bg-onda-border">
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-sage">
