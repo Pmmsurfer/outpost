@@ -36,7 +36,6 @@ export interface RetreatFormData {
   deposit_type: DepositType;
   balance_due_days: string;
   cancellation_policy: CancellationPolicy;
-  covid_policy: string;
   policy_liability_waiver: boolean;
   policy_travel_insurance: boolean;
   policy_age_requirement: boolean;
@@ -74,7 +73,6 @@ export const defaultFormData: RetreatFormData = {
   deposit_type: "flat",
   balance_due_days: "",
   cancellation_policy: "moderate",
-  covid_policy: "",
   policy_liability_waiver: false,
   policy_travel_insurance: false,
   policy_age_requirement: false,

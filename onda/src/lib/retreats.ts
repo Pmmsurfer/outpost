@@ -34,7 +34,7 @@ export interface CustomField {
 }
 
 /**
- * Consent checkbox (e.g. deposit charge, COVID policy).
+ * Consent checkbox (e.g. deposit charge, policy link).
  */
 export interface ConsentCheckbox {
   id: string;

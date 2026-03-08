@@ -131,7 +131,6 @@ export function RetreatForm() {
       deposit_type: data.deposit_type,
       balance_due_days: data.balance_due_days ? parseInt(data.balance_due_days, 10) : null,
       cancellation_policy: data.cancellation_policy,
-      covid_policy: null,
       policy_liability_waiver: data.policy_liability_waiver,
       policy_travel_insurance: data.policy_travel_insurance,
       policy_age_requirement: data.policy_age_requirement,

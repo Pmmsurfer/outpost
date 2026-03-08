@@ -93,7 +93,6 @@ Payload columns (from form `data`):
 | `deposit_type` | string |
 | `balance_due_days` | int |
 | `cancellation_policy` | string |
-| `covid_policy` | null |
 | `policy_liability_waiver` | boolean |
 | `policy_travel_insurance` | boolean |
 | `policy_age_requirement` | boolean |

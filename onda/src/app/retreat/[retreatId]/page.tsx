@@ -216,13 +216,6 @@ export default async function RetreatDetailPage({
           </section>
         )}
 
-        {/* COVID policy — Wild Things */}
-        {detail.covidPolicy && (
-          <div className="mt-8 rounded-xl border border-clay/30 bg-status-pending/30 px-4 py-3">
-            <p className="text-sm text-ink"><strong>COVID-19:</strong> {detail.covidPolicy}</p>
-          </div>
-        )}
-
         {/* CTA + Contact */}
         <div className="mt-12 flex flex-wrap items-center justify-between gap-6 border-t border-onda-border pt-10">
           <div>

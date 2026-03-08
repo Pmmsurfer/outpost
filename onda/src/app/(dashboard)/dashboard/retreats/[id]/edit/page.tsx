@@ -12,6 +12,15 @@ import {
 } from "@/lib/retreats";
 import { supabase } from "@/lib/supabase";
 import { PhotoUpload } from "@/components/retreat/PhotoUpload";
+import type { ActivityType } from "@/lib/retreat-types";
+
+const ACTIVITY_OPTIONS: { value: ActivityType; label: string }[] = [
+  { value: "surf", label: "Surf" },
+  { value: "yoga", label: "Yoga" },
+  { value: "hiking", label: "Hiking" },
+  { value: "multi-sport", label: "Multi-sport" },
+  { value: "other", label: "Other" },
+];
 
 type Highlight = { id: string; title: string; body: string };
 type Faq = { id: string; question: string; answer: string };
@@ -53,7 +62,6 @@ function buildInitialState(retreatId: string) {
     })),
     depositPolicy: detail?.depositPolicy ?? "",
     cancellationPolicy: detail?.cancellationPolicy ?? "",
-    covidPolicy: detail?.covidPolicy ?? "",
     accommodations:
       acc.length > 0
         ? acc.map((a) => ({
@@ -67,6 +75,7 @@ function buildInitialState(retreatId: string) {
     consents: cons.map((c) => ({ id: c.id, label: c.label, required: c.required })),
     coverImageUrl: "",
     galleryUrls: [] as string[],
+    activityType: "yoga" as ActivityType,
   };
 }
 
@@ -104,12 +113,14 @@ function buildInitialStateFromSupabase(row: Record<string, unknown>) {
     faqs: faqs.length ? faqs : [{ id: nextId("faq"), question: "", answer: "" }],
     depositPolicy: "",
     cancellationPolicy: String(row.cancellation_policy ?? ""),
-    covidPolicy: String(row.covid_policy ?? ""),
     accommodations: [{ id: nextId("room"), name: "", capacity: "", priceDollars: "" }],
+    activityType: (row.activity_type === "surf" || row.activity_type === "yoga" || row.activity_type === "hiking" || row.activity_type === "multi-sport" || row.activity_type === "other")
+      ? row.activity_type
+      : "yoga",
     activityLabels: "",
     consents: [] as ConsentRow[],
     coverImageUrl: String(row.cover_image_url ?? ""),
-    galleryUrls: Array.isArray(row.gallery_urls) ? (row.gallery_urls as string[]) : [],
+    galleryUrls: Array.isArray(row.gallery_urls) ? row.gallery_urls as string[] : [],
   };
 }
 
@@ -140,8 +151,8 @@ export default function EditRetreatPage() {
   const [faqs, setFaqs] = useState<Faq[]>(initialState.faqs);
   const [depositPolicy, setDepositPolicy] = useState(initialState.depositPolicy);
   const [cancellationPolicy, setCancellationPolicy] = useState(initialState.cancellationPolicy);
-  const [covidPolicy, setCovidPolicy] = useState(initialState.covidPolicy);
   const [accommodations, setAccommodations] = useState<AccommodationRow[]>(initialState.accommodations);
+  const [activityType, setActivityType] = useState<ActivityType>(initialState.activityType);
   const [activityLabels, setActivityLabels] = useState(initialState.activityLabels);
   const [consents, setConsents] = useState<ConsentRow[]>(initialState.consents);
   const [coverImageUrl, setCoverImageUrl] = useState(initialState.coverImageUrl);
@@ -188,8 +199,8 @@ export default function EditRetreatPage() {
     setFaqs(s.faqs);
     setDepositPolicy(s.depositPolicy);
     setCancellationPolicy(s.cancellationPolicy);
-    setCovidPolicy(s.covidPolicy);
     setAccommodations(s.accommodations);
+    setActivityType(s.activityType);
     setActivityLabels(s.activityLabels);
     setConsents(s.consents);
     setCoverImageUrl(s.coverImageUrl);
@@ -302,7 +313,42 @@ export default function EditRetreatPage() {
     e.preventDefault();
     if (!validate() || submitting) return;
     setSubmitting(true);
-    setTimeout(() => router.push(`/dashboard/retreats/${id}?updated=1`), 400);
+    if (supabase && id) {
+      const [locationCity, ...rest] = location.split(",").map((s) => s.trim());
+      const locationCountry = rest.join(", ").trim() || "";
+      supabase
+        .from("retreats")
+        .update({
+          name: name.trim(),
+          activity_type: activityType,
+          start_date: startDate || null,
+          end_date: endDate || null,
+          contact_email: contactEmail.trim() || null,
+          cancellation_policy: cancellationPolicy.trim() || "moderate",
+          deposit_amount: depositDollars.trim() ? parseFloat(depositDollars) : null,
+          balance_due_days: balanceDueDays.trim() ? parseInt(balanceDueDays, 10) : null,
+          location_city: locationCity || null,
+          location_country: locationCountry || null,
+          short_description: description.trim() || null,
+          full_description: description.trim() || null,
+          typical_day: typicalDay.trim() || null,
+          accommodation_notes: accommodationNote.trim() || null,
+        })
+        .eq("id", id)
+        .then(({ error }) => {
+          setSubmitting(false);
+          if (error) {
+            setErrors((prev) => ({ ...prev, submit: error.message }));
+            return;
+          }
+          router.push(`/dashboard/retreats/${id}?updated=1`);
+        });
+    } else {
+      setTimeout(() => {
+        setSubmitting(false);
+        router.push(`/dashboard/retreats/${id}?updated=1`);
+      }, 400);
+    }
   }
 
   const inputClass =
@@ -328,6 +374,26 @@ export default function EditRetreatPage() {
               <label htmlFor="name" className={labelClass}>Retreat name</label>
               <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. 7-Day Surf & Yoga Retreat" className={inputClass} />
               {errors.name && <p className="mt-1.5 text-sm text-clay">{errors.name}</p>}
+            </div>
+            <div>
+              <span className={labelClass}>Activity type</span>
+              <p className="mt-1 mb-2 text-xs text-warm-gray">Shown on the explore page and retreat listing.</p>
+              <div className="flex flex-wrap gap-2">
+                {ACTIVITY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setActivityType(opt.value)}
+                    className={`rounded-full px-4 py-2.5 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 ${
+                      activityType === opt.value
+                        ? "bg-sage text-white"
+                        : "border border-onda-border bg-white text-ink hover:border-warm-gray hover:bg-[#FAFAF8]"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label htmlFor="location" className={labelClass}>Location</label>
@@ -421,7 +487,7 @@ export default function EditRetreatPage() {
 
         <section className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6">
           <h2 className="font-serif text-lg text-ink">Payment & cancellation</h2>
-          <p className="mt-1 text-sm text-warm-gray">Shown in the Payment & cancellation section and optionally as COVID note.</p>
+          <p className="mt-1 text-sm text-warm-gray">Shown in the Payment & cancellation section on the retreat page.</p>
           <div className="mt-6 space-y-6">
             <div>
               <label htmlFor="depositPolicy" className={labelClass}>Deposit policy (optional)</label>
@@ -430,10 +496,6 @@ export default function EditRetreatPage() {
             <div>
               <label htmlFor="cancellationPolicy" className={labelClass}>Cancellation policy (optional)</label>
               <input id="cancellationPolicy" type="text" value={cancellationPolicy} onChange={(e) => setCancellationPolicy(e.target.value)} placeholder="e.g. Deposit non-refundable; balance refunds up to 30 days before." className={inputClass} />
-            </div>
-            <div>
-              <label htmlFor="covidPolicy" className={labelClass}>COVID-19 policy (optional)</label>
-              <input id="covidPolicy" type="text" value={covidPolicy} onChange={(e) => setCovidPolicy(e.target.value)} placeholder="e.g. Negative test within 48 hours of arrival required." className={inputClass} />
             </div>
           </div>
         </section>
@@ -507,7 +569,7 @@ export default function EditRetreatPage() {
 
         <section className="rounded-2xl border border-onda-border bg-card-bg p-4 sm:p-6">
           <h2 className="font-serif text-lg text-ink">Policies & consent</h2>
-          <p className="mt-1 text-sm text-warm-gray">Checkboxes guests must agree to at registration (e.g. deposit charge, COVID policy).</p>
+          <p className="mt-1 text-sm text-warm-gray">Checkboxes guests must agree to at registration (e.g. deposit charge).</p>
           <div className="mt-6 space-y-4">
             {consents.map((c) => (
               <div key={c.id} className="flex items-center gap-3 rounded-lg border border-onda-border bg-cream/30 p-4">
@@ -521,6 +583,9 @@ export default function EditRetreatPage() {
         </section>
 
         <div className="flex flex-wrap gap-3 pb-6 sm:pb-0">
+          {errors.submit && (
+            <p className="w-full text-sm text-clay">{errors.submit}</p>
+          )}
           <button type="submit" disabled={submitting} className="min-h-[44px] rounded-lg bg-sage px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage-light disabled:opacity-60">
             {submitting ? "Saving…" : "Save changes"}
           </button>

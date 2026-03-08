@@ -37,7 +37,6 @@ export interface RetreatDetail {
   faqs: { question: string; answer: string }[];
   depositPolicy?: string;
   cancellationPolicy?: string;
-  covidPolicy?: string;
   contactEmail?: string;
   coverImageUrl?: string | null;
   galleryUrls?: string[];
@@ -134,7 +133,6 @@ interface SupabaseRetreatDetailRow {
   deposit_type: string | null;
   balance_due_days: number | null;
   cancellation_policy: string | null;
-  covid_policy: string | null;
   contact_email: string | null;
   status?: string;
   cover_image_url?: string | null;
@@ -235,7 +233,6 @@ function mapRowToRetreatDetail(row: SupabaseRetreatDetailRow): RetreatDetail {
     faqs,
     depositPolicy,
     cancellationPolicy,
-    covidPolicy: row.covid_policy ?? undefined,
     contactEmail: row.contact_email ?? undefined,
     coverImageUrl: row.cover_image_url ?? undefined,
     galleryUrls: Array.isArray(row.gallery_urls) ? row.gallery_urls : [],
