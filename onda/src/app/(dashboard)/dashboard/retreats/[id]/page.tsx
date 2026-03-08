@@ -93,6 +93,7 @@ export default function RetreatDetailPage() {
       setLoadingSupabase(false);
       return;
     }
+    if (updated) setLoadingSupabase(true);
     let mounted = true;
     supabase
       .from("retreats")

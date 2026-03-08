@@ -313,6 +313,7 @@ export default function EditRetreatPage() {
     e.preventDefault();
     if (!validate() || submitting) return;
     setSubmitting(true);
+    setErrors((prev) => ({ ...prev, submit: "" }));
     if (supabase && id) {
       const [locationCity, ...rest] = location.split(",").map((s) => s.trim());
       const locationCountry = rest.join(", ").trim() || "";
@@ -347,11 +348,13 @@ export default function EditRetreatPage() {
             setErrors((prev) => ({ ...prev, submit: "Update did not apply. Make sure you're the retreat host." }));
             return;
           }
+          router.refresh();
           router.push(`/dashboard/retreats/${id}?updated=1`);
         });
     } else {
       setTimeout(() => {
         setSubmitting(false);
+        router.refresh();
         router.push(`/dashboard/retreats/${id}?updated=1`);
       }, 400);
     }
