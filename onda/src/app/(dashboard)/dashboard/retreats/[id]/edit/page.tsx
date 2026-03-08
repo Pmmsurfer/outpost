@@ -200,7 +200,7 @@ export default function EditRetreatPage() {
     setDepositPolicy(s.depositPolicy);
     setCancellationPolicy(s.cancellationPolicy);
     setAccommodations(s.accommodations);
-    setActivityType(s.activityType);
+    setActivityType(s.activityType as ActivityType);
     setActivityLabels(s.activityLabels);
     setConsents(s.consents);
     setCoverImageUrl(s.coverImageUrl);
