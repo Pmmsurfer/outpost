@@ -201,10 +201,10 @@ export default function RetreatDetailPage() {
           Edit retreat →
         </Link>
         <Link
-          href={`/book/${retreat.id}`}
+          href={`/retreat/${retreat.id}`}
           className="inline-flex items-center gap-2 rounded-lg bg-sage px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage-light"
         >
-          Register (guest view) →
+          View public listing →
         </Link>
         <Link
           href={`/dashboard/bookings?retreat=${retreat.id}`}
