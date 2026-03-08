@@ -245,7 +245,7 @@ export default function EditRetreatPage() {
     );
   }
 
-  function validate(): boolean {
+  function validate(): boolean | Record<string, string> {
     const next: Record<string, string> = {};
     if (!name.trim()) next.name = "Retreat name is required.";
     if (!location.trim()) next.location = "Location is required.";
@@ -260,6 +260,7 @@ export default function EditRetreatPage() {
       const n = parseInt(balanceDueDays, 10);
       if (isNaN(n) || n < 1 || n > 365) next.balanceDueDays = "Enter 1–365.";
     }
+    // Room validation: show errors but don't block save (accommodations aren't sent in this update)
     const completeRooms = accommodations.filter((r) => {
       const cap = parseInt(r.capacity, 10);
       const price = parseFloat(r.priceDollars);
@@ -276,7 +277,10 @@ export default function EditRetreatPage() {
       if (r.priceDollars !== "" && (isNaN(price) || price < 0)) next[`room-price-${r.id}`] = "Valid price.";
     });
     setErrors(next);
-    return Object.keys(next).length === 0;
+    const coreKeys = ["name", "location", "startDate", "endDate", "depositDollars", "balanceDueDays"];
+    const hasCoreError = coreKeys.some((k) => next[k]);
+    if (hasCoreError) return next;
+    return true;
   }
 
   async function handleSavePhotos() {
@@ -311,9 +315,20 @@ export default function EditRetreatPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!validate() || submitting) return;
-    setSubmitting(true);
+    if (submitting) return;
     setErrors((prev) => ({ ...prev, submit: "" }));
+    const result = validate();
+    if (result !== true) {
+      const coreKeys = ["name", "location", "startDate", "endDate", "depositDollars", "balanceDueDays"];
+      const firstCoreKey = coreKeys.find((k) => (result as Record<string, string>)[k]);
+      if (firstCoreKey) {
+        setErrors((prev) => ({ ...prev, submit: "Please fix the errors above before saving." }));
+        const idMap: Record<string, string> = { name: "name", location: "location", startDate: "startDate", endDate: "endDate", depositDollars: "depositDollars", balanceDueDays: "balanceDueDays" };
+        document.getElementById(idMap[firstCoreKey] ?? firstCoreKey)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+    setSubmitting(true);
     if (supabase && id) {
       const [locationCity, ...rest] = location.split(",").map((s) => s.trim());
       const locationCountry = rest.join(", ").trim() || "";
