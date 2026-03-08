@@ -51,7 +51,7 @@ export default function LandingPage() {
             Log in
           </Link>
           <Link
-            href="/signup"
+            href="/login"
             className="rounded-full bg-sage px-5 py-2.5 text-sm font-semibold text-white hover:bg-sage-light transition-colors"
           >
             List your retreat
@@ -70,7 +70,7 @@ export default function LandingPage() {
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
-              href="/signup"
+              href="/login"
               className="inline-flex rounded-full bg-sage px-6 py-3 text-sm font-semibold text-white hover:bg-sage-light transition-colors"
             >
               List your retreat free →
@@ -216,7 +216,7 @@ export default function LandingPage() {
           </p>
           <div className="mt-8 flex justify-center">
             <Link
-              href="/signup"
+              href="/login"
               className="inline-flex rounded-full bg-sage px-6 py-3 text-sm font-semibold text-white hover:bg-sage-light transition-colors"
             >
               Get started for free →
@@ -235,7 +235,7 @@ export default function LandingPage() {
             Join hosts already using Outpost to manage bookings, guests, and payments.
           </p>
           <Link
-            href="/signup"
+            href="/login"
             className="mt-8 inline-flex rounded-full bg-sage px-6 py-3 text-sm font-semibold text-white hover:bg-sage-light transition-colors"
           >
             List your retreat free →
