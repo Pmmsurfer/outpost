@@ -272,16 +272,22 @@ export default function EditRetreatPage() {
     if (!supabase || !id || savingPhotos) return;
     setSavingPhotos(true);
     setPhotoToast(null);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("retreats")
       .update({
         cover_image_url: coverImageUrl.trim() || null,
-        gallery_urls: galleryUrls,
+        gallery_urls: Array.isArray(galleryUrls) ? galleryUrls : [],
       })
-      .eq("id", id);
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
     setSavingPhotos(false);
     if (error) {
       setPhotoToast(error.message);
+      return;
+    }
+    if (!data) {
+      setPhotoToast("Could not save. Make sure you're the retreat host.");
       return;
     }
     setPhotoToast("Photos saved.");
