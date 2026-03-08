@@ -205,7 +205,7 @@ export default function LandingPage() {
               <p className="mt-4 text-sm text-ink flex-1">Everything in Starter + priority support, custom domain</p>
             </div>
             <div className="rounded-2xl border border-onda-border bg-card-bg p-6 flex flex-col">
-              <h3 className="font-sans text-lg font-semibold text-ink">Studio</h3>
+              <h3 className="font-sans text-lg font-semibold text-ink">Scale</h3>
               <p className="mt-2 font-serif text-2xl text-ink">$149<span className="text-base font-sans font-normal text-warm-gray">/mo</span></p>
               <p className="mt-1 text-sm text-warm-gray">3% commission</p>
               <p className="mt-4 text-sm text-ink flex-1">Everything in Growth + team seats, white-label options</p>
