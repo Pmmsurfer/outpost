@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { mockRetreats, mockBookings, type Retreat } from "@/lib/bookings";
 import {
@@ -18,10 +18,6 @@ function formatRetreatDates(start: string, end: string): string {
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
-}
-
-function getRetreatStatus(): "published" | "draft" {
-  return "published";
 }
 
 function isRetreatFull(retreatId: string): boolean {
@@ -54,13 +50,14 @@ interface WaitlistEntry {
 const mockWaitlistEntries: WaitlistEntry[] = [];
 
 /** Map Supabase retreat row to Retreat shape (camelCase dates, deposit in cents). */
-function mapSupabaseRetreat(row: Record<string, unknown> | null): Retreat | null {
+function mapSupabaseRetreat(row: Record<string, unknown> | null): (Retreat & { status: "draft" | "published" }) | null {
   if (!row || typeof row.id !== "string" || typeof row.name !== "string") return null;
   const startDate = row.start_date != null ? String(row.start_date) : "";
   const endDate = row.end_date != null ? String(row.end_date) : "";
   const depositAmount = typeof row.deposit_amount === "number" ? row.deposit_amount : null;
   const depositCents = depositAmount != null ? Math.round(depositAmount * 100) : undefined;
   const balanceDueDays = typeof row.balance_due_days === "number" ? row.balance_due_days : undefined;
+  const status = row.status === "published" ? "published" : "draft";
   return {
     id: row.id as string,
     name: row.name as string,
@@ -68,19 +65,24 @@ function mapSupabaseRetreat(row: Record<string, unknown> | null): Retreat | null
     endDate,
     depositCents: depositCents ?? undefined,
     balanceDueDaysBeforeStart: balanceDueDays,
+    status,
   };
 }
 
 export default function RetreatDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const updated = searchParams.get("updated") === "1";
   const id = params.id as string;
-  const [supabaseRetreat, setSupabaseRetreat] = useState<Retreat | null>(null);
+  const [supabaseRetreat, setSupabaseRetreat] = useState<(Retreat & { status: "draft" | "published" }) | null>(null);
   const [loadingSupabase, setLoadingSupabase] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const retreatFromMock = mockRetreats.find((r) => r.id === id);
-  const retreat = retreatFromMock ?? supabaseRetreat;
+  const retreat = retreatFromMock ? { ...retreatFromMock, status: "published" as const } : supabaseRetreat;
 
   useEffect(() => {
     if (retreatFromMock || !id) {
@@ -112,7 +114,7 @@ export default function RetreatDetailPage() {
   const waitlist = mockWaitlistEntries.filter((w) => w.retreatId === id);
   const [waitlistOpen, setWaitlistOpen] = useState(false);
 
-  const status = retreat ? getRetreatStatus() : "published";
+  const status = retreat?.status ?? "published";
   const full = retreat ? isRetreatFull(retreat.id) : false;
   const countdown = retreat ? getCountdown(retreat.startDate, retreat.endDate) : null;
 
@@ -120,6 +122,51 @@ export default function RetreatDetailPage() {
   const confirmedCount = allBookingsForRetreat.filter((b) => b.status === "confirmed").length;
   const pendingCount = allBookingsForRetreat.filter((b) => b.status === "pending").length;
   const cancelledCount = allBookingsForRetreat.filter((b) => b.status === "cancelled").length;
+
+  async function handleUnpublish() {
+    if (!supabase || !id || actionLoading) return;
+    setActionLoading(true);
+    setToast(null);
+    const { error } = await supabase.from("retreats").update({ status: "draft" }).eq("id", id).select("id").maybeSingle();
+    setActionLoading(false);
+    if (error) {
+      setToast(error.message);
+      return;
+    }
+    setSupabaseRetreat((prev) => (prev ? { ...prev, status: "draft" } : null));
+    setToast("Retreat unpublished. It won’t appear on the explore page.");
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  async function handlePublish() {
+    if (!supabase || !id || actionLoading) return;
+    setActionLoading(true);
+    setToast(null);
+    const { error } = await supabase.from("retreats").update({ status: "published" }).eq("id", id).select("id").maybeSingle();
+    setActionLoading(false);
+    if (error) {
+      setToast(error.message);
+      return;
+    }
+    setSupabaseRetreat((prev) => (prev ? { ...prev, status: "published" } : null));
+    setToast("Retreat is now live on the explore page.");
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  async function handleDeleteRetreat() {
+    if (!supabase || !id || actionLoading) return;
+    setActionLoading(true);
+    setToast(null);
+    const { error } = await supabase.from("retreats").delete().eq("id", id);
+    setActionLoading(false);
+    setDeleteConfirmOpen(false);
+    if (error) {
+      setToast(error.message);
+      return;
+    }
+    setToast("Retreat deleted.");
+    router.push("/dashboard/retreats");
+  }
 
   if (loadingSupabase && !retreat) {
     return (
@@ -154,6 +201,11 @@ export default function RetreatDetailPage() {
       {updated && (
         <div className="mb-6 rounded-lg border border-sage/30 bg-status-signed px-4 py-3 text-sm font-medium text-sage">
           Retreat updated.
+        </div>
+      )}
+      {toast && (
+        <div className="mb-6 rounded-lg border border-onda-border bg-card-bg px-4 py-3 text-sm text-ink">
+          {toast}
         </div>
       )}
       <div className="flex flex-wrap items-center gap-3">
@@ -206,12 +258,14 @@ export default function RetreatDetailPage() {
         >
           Edit photos →
         </Link>
-        <Link
-          href={`/retreat/${retreat.id}`}
-          className="inline-flex items-center gap-2 rounded-lg bg-sage px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage-light min-h-[44px] sm:min-h-0"
-        >
-          View public listing →
-        </Link>
+        {status === "published" && (
+          <Link
+            href={`/retreat/${retreat.id}`}
+            className="inline-flex items-center gap-2 rounded-lg bg-sage px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage-light min-h-[44px] sm:min-h-0"
+          >
+            View public listing →
+          </Link>
+        )}
         <Link
           href={`/dashboard/bookings?retreat=${retreat.id}`}
           className="inline-flex items-center gap-2 rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink min-h-[44px] sm:min-h-0"
@@ -224,7 +278,46 @@ export default function RetreatDetailPage() {
         >
           Messages
         </Link>
+        {supabase && (
+          <>
+            {status === "published" ? (
+              <button
+                type="button"
+                onClick={handleUnpublish}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-2 rounded-lg border-2 border-clay/50 bg-transparent px-5 py-2.5 text-sm font-semibold text-clay transition-colors hover:border-clay hover:bg-clay/5 disabled:opacity-60 min-h-[44px] sm:min-h-0"
+              >
+                {actionLoading ? "…" : "Unpublish"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handlePublish}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-2 rounded-lg bg-sage px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage-light disabled:opacity-60 min-h-[44px] sm:min-h-0"
+              >
+                {actionLoading ? "…" : "Publish retreat"}
+              </button>
+            )}
+          </>
+        )}
       </div>
+
+      {/* Danger zone: Delete retreat */}
+      {supabase && (
+        <div className="mt-10 rounded-2xl border border-clay/30 bg-card-bg p-6">
+          <h2 className="font-serif text-lg text-ink">Danger zone</h2>
+          <p className="mt-1 text-sm text-warm-gray">Permanently remove this retreat. This cannot be undone.</p>
+          <button
+            type="button"
+            onClick={() => setDeleteConfirmOpen(true)}
+            disabled={actionLoading}
+            className="mt-4 rounded-lg border-2 border-clay bg-transparent px-5 py-2.5 text-sm font-semibold text-clay transition-colors hover:bg-clay/10 disabled:opacity-60 min-h-[44px]"
+          >
+            Delete retreat
+          </button>
+        </div>
+      )}
 
       {accommodationTypes.length > 0 && (
         <div className="mt-8 overflow-hidden rounded-2xl border border-onda-border bg-card-bg">
@@ -411,6 +504,36 @@ export default function RetreatDetailPage() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-retreat-title">
+          <div className="w-full max-w-md rounded-2xl border border-onda-border bg-card-bg p-6 shadow-xl">
+            <h2 id="delete-retreat-title" className="font-serif text-xl text-ink">Delete retreat?</h2>
+            <p className="mt-2 text-sm text-warm-gray">
+              This will permanently remove &quot;{retreat.name}&quot;. Bookings and guest data may be affected. This cannot be undone.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmOpen(false)}
+                disabled={actionLoading}
+                className="min-h-[44px] rounded-lg border-2 border-onda-border bg-transparent px-5 py-2.5 text-sm font-semibold text-ink hover:border-ink disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteRetreat}
+                disabled={actionLoading}
+                className="min-h-[44px] rounded-lg border-2 border-clay bg-clay px-5 py-2.5 text-sm font-semibold text-white hover:bg-clay/90 disabled:opacity-60"
+              >
+                {actionLoading ? "Deleting…" : "Delete retreat"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
