@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const supabase = await createServerSupabaseClient();
   if (!supabase) {
     return NextResponse.json({ error: "Server not configured" }, { status: 500 });
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   const supabase = await createServerSupabaseClient();
   if (!supabase) {
     return NextResponse.json({ error: "Server not configured" }, { status: 500 });
