@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 
 const PROTECTED_PATHS = [
   "/dashboard",
+  "/onboarding",
   "/retreats/new",
   "/bookings",
   "/messages",
@@ -53,7 +54,7 @@ export async function middleware(req: NextRequest) {
 
   if (session && (path === "/login" || path === "/signup")) {
     const next = req.nextUrl.searchParams.get("next");
-    const destination = next && next.startsWith("/") ? next : "/dashboard";
+    const destination = next && next.startsWith("/") ? next : "/onboarding";
     return NextResponse.redirect(new URL(destination, req.url));
   }
 

@@ -29,7 +29,7 @@ function LoginForm() {
       return;
     }
     const destination =
-      next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+      next && next.startsWith("/") && !next.startsWith("//") ? next : "/onboarding";
     router.push(destination);
     router.refresh();
   };
