@@ -352,9 +352,10 @@ export default function EditRetreatPage() {
     }
     setSubmitting(true);
     if (supabase && id) {
+      const client = supabase;
       const [locationCity, ...rest] = location.split(",").map((s) => s.trim());
       const locationCountry = rest.join(", ").trim() || "";
-      supabase
+      client
         .from("retreats")
         .update({
           name: name.trim(),
@@ -391,9 +392,9 @@ export default function EditRetreatPage() {
             const price = parseFloat(r.priceDollars);
             return r.name.trim() && r.capacity !== "" && !isNaN(cap) && cap >= 1 && r.priceDollars !== "" && !isNaN(price) && price >= 0;
           });
-          await supabase.from("retreat_room_types").delete().eq("retreat_id", id);
+          await client.from("retreat_room_types").delete().eq("retreat_id", id);
           if (completeRooms.length > 0) {
-            await supabase.from("retreat_room_types").insert(
+            await client.from("retreat_room_types").insert(
               completeRooms.map((r) => ({
                 retreat_id: id,
                 name: r.name.trim(),
