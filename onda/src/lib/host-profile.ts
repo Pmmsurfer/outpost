@@ -57,10 +57,12 @@ export const mockHostProfile: HostProfile | null = null;
 export const mockHostReviews: HostReview[] = [];
 
 /** Use Supabase retreats for host; no mock data. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- signature kept for API compatibility
 export function getUpcomingRetreatsForHost(_hostId: string): RetreatForHost[] {
   return [];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- signature kept for API compatibility
 export function getPastRetreatsForHost(_hostId: string): RetreatForHost[] {
   return [];
 }
