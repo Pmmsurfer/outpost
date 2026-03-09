@@ -80,10 +80,7 @@ function buildInitialState(retreatId: string) {
 }
 
 /** Build form initial state from a Supabase retreat row (for retreats not in mock). */
-function buildInitialStateFromSupabase(
-  row: Record<string, unknown>,
-  roomTypes: Array<{ id: string; name: string; capacity: number; price_cents: number }> = []
-) {
+function buildInitialStateFromSupabase(row: Record<string, unknown>) {
   const loc = [row.location_city, row.location_country].filter(Boolean).join(", ");
   const included = Array.isArray(row.included) ? (row.included as string[]).join("\n") : "";
   const highlights = Array.isArray(row.highlights)
@@ -100,15 +97,6 @@ function buildInitialStateFromSupabase(
     answer: f?.answer ?? "",
   }));
   const depositAmount = typeof row.deposit_amount === "number" ? row.deposit_amount : null;
-  const accommodationsFromDb =
-    roomTypes.length > 0
-      ? roomTypes.map((r) => ({
-          id: r.id,
-          name: r.name,
-          capacity: String(r.capacity),
-          priceDollars: String(Number(r.price_cents) / 100),
-        }))
-      : [{ id: nextId("room"), name: "", capacity: "", priceDollars: "" }];
   return {
     name: String(row.name ?? ""),
     location: loc,
@@ -125,7 +113,7 @@ function buildInitialStateFromSupabase(
     faqs: faqs.length ? faqs : [{ id: nextId("faq"), question: "", answer: "" }],
     depositPolicy: "",
     cancellationPolicy: String(row.cancellation_policy ?? ""),
-    accommodations: accommodationsFromDb,
+    accommodations: [{ id: nextId("room"), name: "", capacity: "", priceDollars: "" }],
     activityType: ((row.activity_type === "surf" || row.activity_type === "yoga" || row.activity_type === "hiking" || row.activity_type === "multi-sport" || row.activity_type === "other")
       ? row.activity_type
       : "yoga") as ActivityType,
@@ -142,7 +130,6 @@ export default function EditRetreatPage() {
   const id = params.id as string;
   const retreatFromMock = mockRetreats.find((r) => r.id === id);
   const [supabaseRow, setSupabaseRow] = useState<Record<string, unknown> | null>(null);
-  const [supabaseRoomTypes, setSupabaseRoomTypes] = useState<Array<{ id: string; name: string; capacity: number; price_cents: number }> | null>(null);
   const [loadingSupabase, setLoadingSupabase] = useState(!retreatFromMock && !!id);
 
   const retreat = retreatFromMock ?? (supabaseRow ? { id, name: String(supabaseRow.name), startDate: String(supabaseRow.start_date ?? ""), endDate: String(supabaseRow.end_date ?? "") } : null);
@@ -181,31 +168,22 @@ export default function EditRetreatPage() {
       return;
     }
     let mounted = true;
-    Promise.all([
-      supabase.from("retreats").select("*").eq("id", id).single(),
-      supabase.from("retreat_room_types").select("id, name, capacity, price_cents").eq("retreat_id", id).order("price_cents"),
-    ]).then(([retreatRes, roomRes]) => {
-      if (!mounted) return;
-      setLoadingSupabase(false);
-      if (!retreatRes.error && retreatRes.data) setSupabaseRow(retreatRes.data as Record<string, unknown>);
-      if (!roomRes.error && roomRes.data) {
-        const rooms = (roomRes.data as Array<Record<string, unknown>>).map((r) => ({
-          id: String(r.id),
-          name: String(r.name ?? ""),
-          capacity: Number(r.capacity) || 0,
-          price_cents: Number(r.price_cents) || 0,
-        }));
-        setSupabaseRoomTypes(rooms);
-      } else {
-        setSupabaseRoomTypes([]);
-      }
-    });
+    supabase
+      .from("retreats")
+      .select("*")
+      .eq("id", id)
+      .single()
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        setLoadingSupabase(false);
+        if (!error && data) setSupabaseRow(data as Record<string, unknown>);
+      });
     return () => { mounted = false; };
   }, [id, retreatFromMock]);
 
   useEffect(() => {
     if (!supabaseRow) return;
-    const s = buildInitialStateFromSupabase(supabaseRow, supabaseRoomTypes ?? []);
+    const s = buildInitialStateFromSupabase(supabaseRow);
     setName(s.name);
     setLocation(s.location);
     setStartDate(s.startDate);
@@ -227,7 +205,7 @@ export default function EditRetreatPage() {
     setConsents(s.consents);
     setCoverImageUrl(s.coverImageUrl);
     setGalleryUrls(s.galleryUrls);
-  }, [supabaseRow, supabaseRoomTypes]);
+  }, [supabaseRow]);
 
   useEffect(() => {
     const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
@@ -375,34 +353,16 @@ export default function EditRetreatPage() {
         .eq("id", id)
         .select("id, name")
         .maybeSingle()
-        .then(async ({ data, error }) => {
+        .then(({ data, error }) => {
+          setSubmitting(false);
           if (error) {
-            setSubmitting(false);
             setErrors((prev) => ({ ...prev, submit: error.message }));
             return;
           }
           if (!data) {
-            setSubmitting(false);
             setErrors((prev) => ({ ...prev, submit: "Update did not apply. Make sure you're the retreat host." }));
             return;
           }
-          const completeRooms = accommodations.filter((r) => {
-            const cap = parseInt(r.capacity, 10);
-            const price = parseFloat(r.priceDollars);
-            return r.name.trim() && r.capacity !== "" && !isNaN(cap) && cap >= 1 && r.priceDollars !== "" && !isNaN(price) && price >= 0;
-          });
-          await supabase.from("retreat_room_types").delete().eq("retreat_id", id);
-          if (completeRooms.length > 0) {
-            await supabase.from("retreat_room_types").insert(
-              completeRooms.map((r) => ({
-                retreat_id: id,
-                name: r.name.trim(),
-                capacity: parseInt(r.capacity, 10),
-                price_cents: Math.round(parseFloat(r.priceDollars) * 100),
-              }))
-            );
-          }
-          setSubmitting(false);
           router.refresh();
           router.push(`/dashboard/retreats/${id}?updated=1`);
         });

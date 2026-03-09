@@ -7,14 +7,6 @@ import {
 import { mockRetreats } from "@/lib/bookings";
 import { mockAccommodationTypes } from "@/lib/retreats";
 
-export interface RetreatDetailHost {
-  id: string;
-  fullName: string;
-  slug: string;
-  avatarUrl?: string | null;
-  tagline?: string | null;
-}
-
 export interface RetreatDetail {
   id: string;
   bookId?: string; // host retreat id for booking
@@ -37,10 +29,7 @@ export interface RetreatDetail {
   depositCents?: number;
   balanceDueDaysBeforeStart?: number;
   description: string;
-  shortDescription?: string;
   whatIncluded: string[];
-  whatNotIncluded?: string[];
-  skillLevel?: string;
   highlights: { title: string; body: string }[];
   typicalDay?: string;
   accommodationNote?: string;
@@ -51,9 +40,6 @@ export interface RetreatDetail {
   contactEmail?: string;
   coverImageUrl?: string | null;
   galleryUrls?: string[];
-  host?: RetreatDetailHost;
-  spotsTotal: number;
-  spotsRemaining: number;
 }
 
 /** No mock overrides; detail content comes from Supabase/retreat data. */
@@ -82,8 +68,6 @@ function buildDetailFromDiscover(d: DiscoverRetreat, overrides?: Partial<Retreat
     whatIncluded: ["Accommodation", "Meals as listed", "Guided activities"],
     highlights: [],
     faqs: [],
-    spotsTotal: 12,
-    spotsRemaining: 8,
   };
   return { ...base, ...def, ...overrides } as RetreatDetail;
 }
@@ -117,8 +101,6 @@ function buildDetailFromHostRetreat(retreatId: string): RetreatDetail | null {
     highlights: [],
     roomTypes: rooms.map((a) => ({ name: a.name, price: a.priceCents / 100, soldOut: a.soldOut })),
     faqs: [],
-    spotsTotal: 12,
-    spotsRemaining: 8,
   };
   return { ...base, ...def } as RetreatDetail;
 }
@@ -133,7 +115,6 @@ export function getRetreatDetail(retreatId: string): RetreatDetail | null {
 interface SupabaseRetreatDetailRow {
   id: string;
   name: string;
-  host_id?: string | null;
   location_city: string | null;
   location_country: string | null;
   activity_type: string;
@@ -144,9 +125,7 @@ interface SupabaseRetreatDetailRow {
   short_description: string | null;
   full_description: string | null;
   included: string[] | null;
-  not_included?: string[] | null;
-  skill_level?: string | null;
-  highlights: string[] | { title?: string; body?: string }[] | null;
+  highlights: string[] | null;
   faqs: { question: string; answer: string }[] | null;
   typical_day: string | null;
   accommodation_notes: string | null;
@@ -206,13 +185,8 @@ function mapRowToRetreatDetail(row: SupabaseRetreatDetailRow): RetreatDetail {
     ? `${new Date(start).toLocaleDateString("en-US", { month: "short" })}–${new Date(end).toLocaleDateString("en-US", { month: "short" })}`
     : "Year-round";
   const whatIncluded = Array.isArray(row.included) ? row.included : [];
-  const whatNotIncluded = Array.isArray(row.not_included) ? row.not_included : [];
-  const highlightsRaw = Array.isArray(row.highlights) ? row.highlights : [];
-  const highlights = highlightsRaw.map((h) =>
-    typeof h === "string" ? { title: "", body: h } : { title: h?.title ?? "", body: h?.body ?? "" }
-  );
+  const highlights = (Array.isArray(row.highlights) ? row.highlights : []).map((body) => ({ title: "", body }));
   const faqs = Array.isArray(row.faqs) ? row.faqs : [];
-  const capacity = row.capacity != null ? Number(row.capacity) : 0;
   const depositParts: string[] = [];
   if (row.deposit_amount != null && row.deposit_amount > 0) {
     if (row.deposit_type === "percent") {
@@ -252,10 +226,7 @@ function mapRowToRetreatDetail(row: SupabaseRetreatDetailRow): RetreatDetail {
     depositCents: row.deposit_amount != null ? Math.round(Number(row.deposit_amount) * 100) : undefined,
     balanceDueDaysBeforeStart: row.balance_due_days ?? undefined,
     description: row.full_description || row.short_description || "Retreat details.",
-    shortDescription: row.short_description ?? undefined,
     whatIncluded,
-    whatNotIncluded: whatNotIncluded.length > 0 ? whatNotIncluded : undefined,
-    skillLevel: row.skill_level ?? undefined,
     highlights,
     typicalDay: row.typical_day ?? undefined,
     accommodationNote: row.accommodation_notes ?? undefined,
@@ -265,8 +236,6 @@ function mapRowToRetreatDetail(row: SupabaseRetreatDetailRow): RetreatDetail {
     contactEmail: row.contact_email ?? undefined,
     coverImageUrl: row.cover_image_url ?? undefined,
     galleryUrls: Array.isArray(row.gallery_urls) ? row.gallery_urls : [],
-    spotsTotal: capacity,
-    spotsRemaining: capacity, // updated in getRetreatDetailFromSupabase if booking count available
   };
 }
 
@@ -284,47 +253,5 @@ export async function getRetreatDetailFromSupabase(retreatId: string): Promise<R
   if (error || !data) return null;
   const row = data as unknown as SupabaseRetreatDetailRow;
   if (row.status !== "published") return null;
-  const detail = mapRowToRetreatDetail(row);
-
-  const capacity = row.capacity != null ? Number(row.capacity) : 0;
-  let bookedCount = 0;
-  const { count } = await supabase
-    .from("bookings")
-    .select("id", { count: "exact", head: true })
-    .eq("retreat_id", retreatId)
-    .in("status", ["confirmed", "pending"]);
-  if (typeof count === "number") bookedCount = count;
-  detail.spotsRemaining = Math.max(0, capacity - bookedCount);
-
-  if (row.host_id) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, full_name, slug, avatar_url, tagline")
-      .eq("id", row.host_id)
-      .single();
-    if (profile) {
-      const p = profile as Record<string, unknown>;
-      detail.host = {
-        id: p.id as string,
-        fullName: (p.full_name as string) ?? "",
-        slug: (p.slug as string) ?? "",
-        avatarUrl: (p.avatar_url as string) ?? null,
-        tagline: (p.tagline as string) ?? null,
-      };
-    }
-  }
-
-  const { data: roomRows } = await supabase
-    .from("retreat_room_types")
-    .select("id, name, capacity, booked_count, price_cents")
-    .eq("retreat_id", retreatId)
-    .order("price_cents");
-  const rooms = (roomRows ?? []) as Array<{ id: string; name: string; capacity: number; booked_count: number; price_cents: number }>;
-  detail.roomTypes = rooms.map((r) => ({
-    name: r.name,
-    price: Number(r.price_cents) / 100,
-    soldOut: (Number(r.booked_count) || 0) >= (Number(r.capacity) || 1),
-  }));
-
-  return detail;
+  return mapRowToRetreatDetail(row);
 }
