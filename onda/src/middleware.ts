@@ -54,7 +54,8 @@ export async function middleware(req: NextRequest) {
 
   if (session && (path === "/login" || path === "/signup")) {
     const next = req.nextUrl.searchParams.get("next");
-    const destination = next && next.startsWith("/") ? next : "/onboarding";
+    const fallback = path === "/signup" ? "/dashboard" : "/onboarding";
+    const destination = next && next.startsWith("/") ? next : fallback;
     return NextResponse.redirect(new URL(destination, req.url));
   }
 

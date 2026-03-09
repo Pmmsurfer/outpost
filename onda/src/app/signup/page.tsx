@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +13,16 @@ function SignupForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // If already signed in, keep /signup for unauthenticated users only.
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        router.replace("/dashboard");
+      }
+    });
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
