@@ -80,7 +80,13 @@ function LoginForm() {
             {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
-        <Link href="/" className="mt-6 block text-center text-sm font-medium text-[#4A6741] hover:underline">
+        <p className="mt-6 text-center text-sm text-[#8A8478]">
+          Don&apos;t have an account?{" "}
+          <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"} className="font-medium text-[#4A6741] hover:underline">
+            Sign up
+          </Link>
+        </p>
+        <Link href="/" className="mt-4 block text-center text-sm font-medium text-[#4A6741] hover:underline">
           ← Back to home
         </Link>
       </div>
