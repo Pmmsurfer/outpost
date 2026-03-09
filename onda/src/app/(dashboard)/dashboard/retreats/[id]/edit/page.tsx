@@ -114,9 +114,9 @@ function buildInitialStateFromSupabase(row: Record<string, unknown>) {
     depositPolicy: "",
     cancellationPolicy: String(row.cancellation_policy ?? ""),
     accommodations: [{ id: nextId("room"), name: "", capacity: "", priceDollars: "" }],
-    activityType: (row.activity_type === "surf" || row.activity_type === "yoga" || row.activity_type === "hiking" || row.activity_type === "multi-sport" || row.activity_type === "other")
+    activityType: ((row.activity_type === "surf" || row.activity_type === "yoga" || row.activity_type === "hiking" || row.activity_type === "multi-sport" || row.activity_type === "other")
       ? row.activity_type
-      : "yoga",
+      : "yoga") as ActivityType,
     activityLabels: "",
     consents: [] as ConsentRow[],
     coverImageUrl: String(row.cover_image_url ?? ""),
