@@ -194,20 +194,26 @@ export default function LandingPage() {
           <div className="mt-12 grid gap-6 sm:grid-cols-3 items-stretch">
             <div className="rounded-2xl border border-onda-border bg-card-bg p-6 flex flex-col">
               <h3 className="font-sans text-lg font-semibold text-ink">Starter</h3>
-              <p className="mt-2 font-serif text-2xl text-ink">$0<span className="text-base font-sans font-normal text-warm-gray">/mo</span></p>
-              <p className="mt-1 text-sm text-warm-gray">10% commission</p>
+              <p className="mt-2 font-serif text-2xl text-ink">
+                $0<span className="text-base font-sans font-normal text-warm-gray">/mo</span>
+              </p>
+              <p className="mt-1 text-sm text-warm-gray">6% commission</p>
               <p className="mt-4 text-sm text-ink flex-1">Unlimited retreats, booking page, guest management</p>
             </div>
             <div className="rounded-2xl border-2 border-sage bg-card-bg p-6 flex flex-col shadow-lg relative sm:-mt-2 sm:mb-2">
               <h3 className="font-sans text-lg font-semibold text-ink">Growth</h3>
-              <p className="mt-2 font-serif text-2xl text-ink">$49<span className="text-base font-sans font-normal text-warm-gray">/mo</span></p>
-              <p className="mt-1 text-sm text-warm-gray">5% commission</p>
+              <p className="mt-2 font-serif text-2xl text-ink">
+                $49<span className="text-base font-sans font-normal text-warm-gray">/mo</span>
+              </p>
+              <p className="mt-1 text-sm text-warm-gray">4% commission</p>
               <p className="mt-4 text-sm text-ink flex-1">Everything in Starter + priority support, custom domain</p>
             </div>
             <div className="rounded-2xl border border-onda-border bg-card-bg p-6 flex flex-col">
               <h3 className="font-sans text-lg font-semibold text-ink">Scale</h3>
-              <p className="mt-2 font-serif text-2xl text-ink">$149<span className="text-base font-sans font-normal text-warm-gray">/mo</span></p>
-              <p className="mt-1 text-sm text-warm-gray">3% commission</p>
+              <p className="mt-2 font-serif text-2xl text-ink">
+                $149<span className="text-base font-sans font-normal text-warm-gray">/mo</span>
+              </p>
+              <p className="mt-1 text-sm text-warm-gray">2% commission</p>
               <p className="mt-4 text-sm text-ink flex-1">Everything in Growth + team seats, white-label options</p>
             </div>
           </div>
