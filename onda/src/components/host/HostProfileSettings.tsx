@@ -7,6 +7,8 @@ import { nameToSlug } from "@/lib/slug";
 
 const BUCKET = "avatars";
 const SHORT_BIO_MAX = 160;
+const TAGLINE_MAX = 80;
+const PHILOSOPHY_MAX = 300;
 
 export function AvatarUpload({
   avatarUrl,
@@ -105,6 +107,99 @@ export function AvatarUpload({
   );
 }
 
+const COVER_BUCKET = "avatars";
+
+export function CoverImageUpload({
+  coverUrl,
+  onUpload,
+  onRemove,
+  disabled,
+}: {
+  coverUrl: string | null;
+  onUpload: (url: string) => void;
+  onRemove: () => void;
+  disabled?: boolean;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const upload = useCallback(
+    async (file: File) => {
+      if (!supabase) {
+        setError("Supabase is not configured.");
+        return;
+      }
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `covers/${Date.now()}.${ext}`;
+      setUploading(true);
+      setError(null);
+      const { data, error: err } = await supabase.storage.from(COVER_BUCKET).upload(path, file, { upsert: true });
+      setUploading(false);
+      if (err) {
+        setError(err.message);
+        return;
+      }
+      const { data: urlData } = supabase.storage.from(COVER_BUCKET).getPublicUrl(data.path);
+      onUpload(urlData.publicUrl);
+    },
+    [onUpload]
+  );
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    upload(file);
+    e.target.value = "";
+  };
+
+  return (
+    <div>
+      <p className="mb-2 text-sm font-semibold text-ink">Cover image (profile banner)</p>
+      <div className="flex flex-col gap-2">
+        <div className="h-32 w-full max-w-md overflow-hidden rounded-lg border border-onda-border bg-card-bg">
+          {coverUrl ? (
+            <img src={coverUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-warm-gray">No cover image</div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFile}
+            disabled={disabled || uploading}
+            className="hidden"
+            aria-hidden
+          />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={disabled || uploading}
+            className="rounded-lg border border-onda-border bg-transparent px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:bg-[rgba(74,103,65,0.06)] disabled:opacity-60"
+          >
+            Upload cover
+          </button>
+          {coverUrl && (
+            <button
+              type="button"
+              onClick={onRemove}
+              disabled={disabled || uploading}
+              className="text-left text-sm text-warm-gray underline hover:text-ink disabled:opacity-60"
+            >
+              Remove
+            </button>
+          )}
+          {uploading && <span className="text-sm text-warm-gray">Uploading…</span>}
+          {error && <span className="text-sm text-clay">{error}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface HostProfileFormData {
   full_name: string;
   short_bio: string;
@@ -114,6 +209,14 @@ interface HostProfileFormData {
   certifications: string[];
   instagram_handle: string;
   website_url: string;
+  tagline: string;
+  philosophy: string;
+  instagram_url: string;
+  years_hosting: string;
+  retreat_count: string;
+  location: string;
+  languages: string[];
+  cover_image_url: string | null;
 }
 
 const emptyForm: HostProfileFormData = {
@@ -125,6 +228,14 @@ const emptyForm: HostProfileFormData = {
   certifications: [],
   instagram_handle: "",
   website_url: "",
+  tagline: "",
+  philosophy: "",
+  instagram_url: "",
+  years_hosting: "",
+  retreat_count: "",
+  location: "",
+  languages: [],
+  cover_image_url: null,
 };
 
 export function HostProfileSettings() {
@@ -156,6 +267,14 @@ export function HostProfileSettings() {
         certifications: Array.isArray(row.certifications) ? (row.certifications as string[]) : [],
         instagram_handle: (row.instagram_handle as string) ?? "",
         website_url: (row.website_url as string) ?? "",
+        tagline: (row.tagline as string) ?? "",
+        philosophy: (row.philosophy as string) ?? "",
+        instagram_url: (row.instagram_url as string) ?? "",
+        years_hosting: row.years_hosting != null ? String(row.years_hosting) : "",
+        retreat_count: row.retreat_count != null ? String(row.retreat_count) : "",
+        location: (row.location as string) ?? "",
+        languages: Array.isArray(row.languages) ? (row.languages as string[]) : [],
+        cover_image_url: (row.cover_image_url as string) ?? null,
       });
       setSlug((row.slug as string) ?? nameToSlug((row.full_name as string) ?? ""));
     } else {
@@ -194,6 +313,14 @@ export function HostProfileSettings() {
           instagram_handle: form.instagram_handle.replace(/^@/, "").trim() || null,
           website_url: form.website_url.trim() || null,
           slug: slugValue,
+          tagline: form.tagline.slice(0, TAGLINE_MAX).trim() || null,
+          philosophy: form.philosophy.slice(0, PHILOSOPHY_MAX).trim() || null,
+          instagram_url: form.instagram_url.trim() || null,
+          years_hosting: form.years_hosting ? parseInt(form.years_hosting, 10) : null,
+          retreat_count: form.retreat_count ? parseInt(form.retreat_count, 10) : null,
+          location: form.location.trim() || null,
+          languages: form.languages,
+          cover_image_url: form.cover_image_url || null,
         },
         { onConflict: "id" }
       );
@@ -260,6 +387,88 @@ export function HostProfileSettings() {
         </div>
 
         <div>
+          <label className="block text-sm font-semibold text-ink">Tagline (max {TAGLINE_MAX} characters)</label>
+          <input
+            type="text"
+            value={form.tagline}
+            onChange={(e) => setForm((f) => ({ ...f, tagline: e.target.value.slice(0, TAGLINE_MAX) }))}
+            maxLength={TAGLINE_MAX}
+            placeholder="e.g. Surf coach & ocean lover"
+            className="mt-1 w-full rounded-lg border border-onda-border bg-white px-4 py-2.5 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+          />
+          <p className="mt-1 text-xs text-warm-gray">
+            {form.tagline.length} / {TAGLINE_MAX}
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-ink">Philosophy (max {PHILOSOPHY_MAX} characters)</label>
+          <textarea
+            value={form.philosophy}
+            onChange={(e) => setForm((f) => ({ ...f, philosophy: e.target.value.slice(0, PHILOSOPHY_MAX) }))}
+            maxLength={PHILOSOPHY_MAX}
+            rows={4}
+            placeholder="What you believe about retreat experiences."
+            className="mt-1 w-full rounded-lg border border-onda-border bg-white px-4 py-2.5 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+          />
+          <p className="mt-1 text-xs text-warm-gray">
+            {form.philosophy.length} / {PHILOSOPHY_MAX}
+          </p>
+        </div>
+
+        <CoverImageUpload
+          coverUrl={form.cover_image_url}
+          onUpload={(url) => setForm((f) => ({ ...f, cover_image_url: url }))}
+          onRemove={() => setForm((f) => ({ ...f, cover_image_url: null }))}
+          disabled={saving}
+        />
+
+        <div>
+          <label className="block text-sm font-semibold text-ink">Location</label>
+          <input
+            type="text"
+            value={form.location}
+            onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+            placeholder="e.g. Based in Nosara, Costa Rica"
+            className="mt-1 w-full rounded-lg border border-onda-border bg-white px-4 py-2.5 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-ink">Languages</label>
+          <TagInput
+            value={form.languages}
+            onChange={(languages) => setForm((f) => ({ ...f, languages }))}
+            placeholder="e.g. English, Spanish"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-semibold text-ink">Years hosting</label>
+            <input
+              type="number"
+              min={0}
+              value={form.years_hosting}
+              onChange={(e) => setForm((f) => ({ ...f, years_hosting: e.target.value }))}
+              placeholder="e.g. 5"
+              className="mt-1 w-full rounded-lg border border-onda-border bg-white px-4 py-2.5 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-ink">Retreat count</label>
+            <input
+              type="number"
+              min={0}
+              value={form.retreat_count}
+              onChange={(e) => setForm((f) => ({ ...f, retreat_count: e.target.value }))}
+              placeholder="e.g. 12"
+              className="mt-1 w-full rounded-lg border border-onda-border bg-white px-4 py-2.5 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+            />
+          </div>
+        </div>
+
+        <div>
           <label className="block text-sm font-semibold text-ink">Long bio</label>
           <textarea
             value={form.long_bio}
@@ -298,6 +507,17 @@ export function HostProfileSettings() {
             className="mt-1 w-full rounded-lg border border-onda-border bg-white px-4 py-2.5 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
           />
           <p className="mt-1 text-xs text-warm-gray">Stored without @</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-ink">Instagram URL</label>
+          <input
+            type="url"
+            value={form.instagram_url}
+            onChange={(e) => setForm((f) => ({ ...f, instagram_url: e.target.value }))}
+            placeholder="https://instagram.com/yourhandle"
+            className="mt-1 w-full rounded-lg border border-onda-border bg-white px-4 py-2.5 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+          />
         </div>
 
         <div>
