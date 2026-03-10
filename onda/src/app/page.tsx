@@ -63,10 +63,10 @@ export default function LandingPage() {
       <section className="bg-cream px-6 pt-24 pb-20 sm:px-8 sm:pt-24 sm:pb-28">
         <div className="mx-auto max-w-6xl">
           <h1 className="font-serif text-5xl leading-tight tracking-tight text-ink sm:text-[64px] lg:text-7xl">
-            Your retreat, beautifully managed
+            Great retreats don&apos;t happen by accident.
           </h1>
           <p className="mt-6 max-w-lg text-lg text-warm-gray font-sans">
-            Outpost gives hosts a booking page, guest management, and payment tools — purpose-built for multi-day retreat experiences.
+            The best retreat hosts know that the experience starts long before guests arrive — it starts the moment someone decides to come. Outpost gives you the tools to show up as a great host from the very first touchpoint.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
@@ -127,34 +127,34 @@ export default function LandingPage() {
       <section className="border-t border-onda-border bg-card-bg px-6 py-24 sm:px-8">
         <div className="mx-auto max-w-6xl">
           <h2 className="font-serif text-3xl tracking-tight text-ink sm:text-4xl">
-            From idea to sold out in minutes
+            Host with intention, not spreadsheets.
           </h2>
           <div className="mt-12 grid gap-10 sm:grid-cols-3">
             <div>
               <span className="font-serif text-3xl text-clay">01</span>
               <h3 className="mt-3 font-sans text-lg font-semibold text-ink">
-                Create your retreat listing
+                Define your gathering
               </h3>
               <p className="mt-2 text-warm-gray font-sans">
-                Add your dates, itinerary, pricing, and photos. Your public booking page is live instantly.
+                Create a retreat listing that captures your vision — not just the dates and price, but the why. Your public booking page tells the story of the experience you&apos;re creating.
               </p>
             </div>
             <div>
               <span className="font-serif text-3xl text-clay">02</span>
               <h3 className="mt-3 font-sans text-lg font-semibold text-ink">
-                Share with your audience
+                Curate your guests
               </h3>
               <p className="mt-2 text-warm-gray font-sans">
-                Get a custom booking link and a ready-to-post Instagram card. One tap to share with your followers.
+                The right guests make the experience better for everyone. Share your booking link with your audience, review applications, and build the group you actually want to host.
               </p>
             </div>
             <div>
               <span className="font-serif text-3xl text-clay">03</span>
               <h3 className="mt-3 font-sans text-lg font-semibold text-ink">
-                Manage everything in one place
+                Show up fully as the host
               </h3>
               <p className="mt-2 text-warm-gray font-sans">
-                Guest list, payments, messages, and waivers — all in your Outpost dashboard.
+                With payments, guest info, waivers, and communications handled by Outpost, you can focus entirely on what only you can do — creating an experience your guests will never forget.
               </p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export default function LandingPage() {
       <section className="border-t border-onda-border bg-cream px-6 py-24 sm:px-8">
         <div className="mx-auto max-w-6xl">
           <h2 className="font-serif text-3xl tracking-tight text-ink sm:text-4xl">
-            Everything you need, nothing you don&apos;t
+            Every touchpoint is part of the experience.
           </h2>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => {
@@ -235,10 +235,10 @@ export default function LandingPage() {
       <section className="border-t border-onda-border bg-ink px-6 py-24 sm:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-serif text-3xl tracking-tight text-card-bg sm:text-4xl">
-            Ready to fill your next retreat?
+            Your guests are waiting for someone to step up and host.
           </h2>
           <p className="mt-4 text-lg text-card-bg/90 font-sans">
-            Join hosts already using Outpost to manage bookings, guests, and payments.
+            Outpost gives you everything you need to show up as the host your gathering deserves.
           </p>
           <Link
             href="/signup"
