@@ -26,6 +26,9 @@ export async function submitPost(formData: FormData) {
   }
 
   const supabase = await createClient();
+  if (!supabase) {
+    return { ok: false, error: "Server configuration error. Try again later." };
+  }
   const {
     data: { user },
   } = await supabase.auth.getUser();

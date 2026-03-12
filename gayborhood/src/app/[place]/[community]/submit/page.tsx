@@ -24,6 +24,11 @@ export default async function CommunitySubmitPage({ params }: Props) {
   const { place, community } = params;
 
   const supabase = await createClient();
+  if (!supabase) {
+    redirect(
+      "/login?next=" + encodeURIComponent(`/${place}/${community}/submit`)
+    );
+  }
   const {
     data: { user },
   } = await supabase.auth.getUser();

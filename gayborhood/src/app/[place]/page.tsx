@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { isPowerUser } from "@/lib/powerUser";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import CommunityList from "./CommunityList";
 
 type Props = { params: { place: string } };
 
@@ -7,23 +10,37 @@ export default async function PlacePage({ params }: Props) {
   const { place } = params;
 
   if (!supabaseAdmin) {
-    throw new Error("Supabase admin client is not configured");
+    return (
+      <main id="main-content" className="mx-auto max-w-board px-[18px] py-12 font-courier text-sm text-faded">
+        <p>Server configuration error. Set SUPABASE_SERVICE_ROLE_KEY in the deployment environment.</p>
+        <Link href="/" className="mt-4 inline-block text-link hover:underline">← Home</Link>
+      </main>
+    );
   }
 
+  const admin = supabaseAdmin!;
+
+  let user: { email?: string } | null = null;
+  try {
+    const supabase = await createClient();
+    if (supabase) {
+      const { data } = await supabase.auth.getUser();
+      user = data?.user ?? null;
+    }
+  } catch {
+    // Continue without power user
+  }
+  const powerUser = isPowerUser(user?.email ?? undefined);
+
+  try {
   const [{ data: placeRow }, { data: communities }] = await Promise.all([
-    supabaseAdmin.from("places").select("*").eq("slug", place).single(),
-    supabaseAdmin
+    admin.from("places").select("*").eq("slug", place).single(),
+    admin
       .from("communities")
       .select("*")
       .eq("place_slug", place)
       .order("name", { ascending: true }),
   ]);
-
-  console.log("PLACE_PAGE_COMMUNITIES", {
-    place,
-    count: communities?.length ?? 0,
-    slugs: (communities ?? []).map((c: any) => c.slug),
-  });
 
   if (!placeRow) {
     return (
@@ -42,7 +59,9 @@ export default async function PlacePage({ params }: Props) {
     communities && communities.length > 0
       ? await Promise.all(
           communities.map(async (c: any) => {
-            const { count } = await supabaseAdmin
+            if (!supabaseAdmin) throw new Error("supabaseAdmin is not initialized");
+            const db = supabaseAdmin;
+            const { count } = await db
               .from("posts")
               .select("id", { count: "exact", head: true })
               .eq("place_slug", place)
@@ -63,32 +82,12 @@ export default async function PlacePage({ params }: Props) {
         {placeRow.slug}/
       </h1>
 
-      <div className="mt-6 space-y-2 font-courier text-sm">
-        {communitiesWithCounts.length === 0 ? (
-          <p className="text-faded">
-            No communities here yet. Start the first one.
-          </p>
-        ) : (
-          communitiesWithCounts.map((c: any) => (
-            <div key={c.id} className="flex flex-wrap gap-x-2">
-              <Link
-                href={`/${place}/${c.slug}`}
-                className="min-w-[140px] text-link hover:underline"
-              >
-                {c.slug}
-              </Link>
-              <span className="flex-1 text-faded">
-                {c.description ?? ""}
-                {"  "}
-                {c.is_active
-                  ? `${c.member_count ?? 0} members · ${
-                      c.eventsThisWeek ?? 0
-                    } events this week`
-                  : "starting out"}
-              </span>
-            </div>
-          ))
-        )}
+      <div className="mt-6">
+        <CommunityList
+          place={place}
+          communities={communitiesWithCounts}
+          isPowerUser={powerUser}
+        />
       </div>
 
       <p className="mt-6 font-courier text-sm">
@@ -101,4 +100,12 @@ export default async function PlacePage({ params }: Props) {
       </p>
     </main>
   );
+  } catch (_err) {
+    return (
+      <main id="main-content" className="mx-auto max-w-board px-[18px] py-12 font-courier text-sm text-faded">
+        <p>Something went wrong loading this page. Check that Supabase env vars (URL, anon key, service role key) are set in Vercel.</p>
+        <Link href="/" className="mt-4 inline-block text-link hover:underline">← Home</Link>
+      </main>
+    );
+  }
 }

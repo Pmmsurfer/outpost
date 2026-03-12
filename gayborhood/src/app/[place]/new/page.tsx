@@ -24,6 +24,9 @@ export default async function NewCommunityPage({ params }: Props) {
   const { place } = params;
 
   const supabase = await createClient();
+  if (!supabase) {
+    redirect("/login?next=" + encodeURIComponent(`/${place}/new`));
+  }
   const {
     data: { user },
   } = await supabase.auth.getUser();
