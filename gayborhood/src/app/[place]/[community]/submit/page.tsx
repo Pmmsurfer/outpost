@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { CommunitySubmitForm } from "./ui/CommunitySubmitForm";
 
 type Params = { place: string; community: string };
@@ -21,26 +21,47 @@ export async function generateMetadata({
 }
 
 export default async function CommunitySubmitPage({ params }: Props) {
-  const { place, community } = params;
+  const place = typeof params.place === "string" ? params.place : "";
+  const community = typeof params.community === "string" ? params.community : "";
 
-  const supabase = await createClient();
-  if (!supabase) {
+  if (!place || !community) {
+    return (
+      <main id="main-content" className="mx-auto max-w-board px-[18px] py-12 font-courier text-sm text-faded">
+        <p>Invalid URL. Use a link from a community page to post.</p>
+        <Link href="/" className="mt-4 inline-block text-link hover:underline">← Home</Link>
+      </main>
+    );
+  }
+
+  try {
+
+  const supabaseAuth = await createClient();
+  if (!supabaseAuth) {
     redirect(
       "/login?next=" + encodeURIComponent(`/${place}/${community}/submit`)
     );
   }
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabaseAuth.auth.getUser();
   if (!user) {
     redirect(
       "/login?next=" + encodeURIComponent(`/${place}/${community}/submit`)
     );
   }
 
+  if (!supabaseAdmin) {
+    return (
+      <main id="main-content" className="mx-auto max-w-board px-[18px] py-12 font-courier text-sm text-faded">
+        <p>Server configuration error. Set SUPABASE_SERVICE_ROLE_KEY in the deployment environment.</p>
+        <Link href={`/${place}/${community}`} className="mt-4 inline-block text-link hover:underline">← Back to board</Link>
+      </main>
+    );
+  }
+
   const [{ data: placeRow }, { data: communityRow }] = await Promise.all([
-    supabase.from("places").select("*").eq("slug", place).single(),
-    supabase
+    supabaseAdmin.from("places").select("*").eq("slug", place).single(),
+    supabaseAdmin
       .from("communities")
       .select("*")
       .eq("place_slug", place)
@@ -48,7 +69,14 @@ export default async function CommunitySubmitPage({ params }: Props) {
       .single(),
   ]);
 
-  if (!placeRow || !communityRow) notFound();
+  if (!placeRow || !communityRow) {
+    return (
+      <main id="main-content" className="mx-auto max-w-board px-[18px] py-12 font-courier text-sm text-faded">
+        <p>Place or community not found: <strong>{place}/{community}</strong>. Check that the place and community exist in the database and the URL matches their slugs.</p>
+        <Link href={`/${place}`} className="mt-4 inline-block text-link hover:underline">← Back to {place}</Link>
+      </main>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-paper">
@@ -83,5 +111,13 @@ export default async function CommunitySubmitPage({ params }: Props) {
       </main>
     </div>
   );
+  } catch {
+    return (
+      <main id="main-content" className="mx-auto max-w-board px-[18px] py-12 font-courier text-sm text-faded">
+        <p>Something went wrong loading this page.</p>
+        <Link href={`/${place}/${community}`} className="mt-4 inline-block text-link hover:underline">← Back to board</Link>
+      </main>
+    );
+  }
 }
 

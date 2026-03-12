@@ -92,6 +92,16 @@ export async function submitPost(formData: FormData) {
   if (error) return { ok: false, error: error.message };
   if (!data?.id) return { ok: false, error: "Post created but no ID returned." };
 
+  await supabase.from("community_members").upsert(
+    {
+      place_slug: place,
+      community_slug: community,
+      user_id: user.id,
+      show_in_directory: false,
+    },
+    { onConflict: "place_slug,community_slug,user_id" }
+  );
+
   revalidatePath(`/${place}/${community}`);
   revalidatePath(`/post/${data.id}`);
 

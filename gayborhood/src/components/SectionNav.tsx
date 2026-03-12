@@ -7,6 +7,7 @@ type Counts = {
   anonymous: number;
   classifieds: number;
   recs: number;
+  members: number;
 };
 
 export default function SectionNav({ counts }: { counts: Counts }) {
@@ -17,7 +18,7 @@ export default function SectionNav({ counts }: { counts: Counts }) {
     { id: "anonymous", label: "Anonymous", count: counts.anonymous },
     { id: "classifieds", label: "Classifieds", count: counts.classifieds },
     { id: "recs", label: "Recs", count: counts.recs },
-    { id: "join", label: "Join", count: null },
+    { id: "members", label: "Members", count: counts.members },
   ];
 
   return (
@@ -28,7 +29,7 @@ export default function SectionNav({ counts }: { counts: Counts }) {
             {label}
             {count != null ? ` (${count})` : ""}
           </Link>
-          {id !== "join" && " · "}
+          {id !== "members" && " · "}
         </span>
       ))}
     </nav>

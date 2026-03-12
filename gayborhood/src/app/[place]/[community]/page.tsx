@@ -1,7 +1,10 @@
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { createClient } from "@/lib/supabase/server";
+import { isPowerUser } from "@/lib/powerUser";
 import StickyNav from "@/components/StickyNav";
 import SectionNav from "@/components/SectionNav";
 import ThisWeekSection from "@/components/ThisWeekSection";
@@ -11,9 +14,12 @@ import AnonCard from "@/components/AnonCard";
 import ClassifiedItem from "@/components/ClassifiedItem";
 import PaidEventCard from "@/components/PaidEventCard";
 import RecCard from "@/components/RecCard";
+import MemberCard from "@/components/MemberCard";
+import JoinCommunityButton from "./JoinCommunityButton";
+import DirectoryOptInPrompt from "./DirectoryOptInPrompt";
 
 type Params = { place: string; community: string };
-type Props = { params: Params };
+type Props = { params: Params; searchParams?: { joined?: string } };
 
 export async function generateMetadata({
   params,
@@ -27,10 +33,39 @@ export async function generateMetadata({
   };
 }
 
-export default async function CommunityPage({ params }: Props) {
+export default async function CommunityPage({ params, searchParams }: Props) {
   const { place, community } = params;
+  const showDirectoryPrompt = searchParams?.joined === "1";
 
   if (!supabase) throw new Error("Supabase not configured");
+
+   // Lightweight auth lookup for power‑user and "member" state
+  let userEmail: string | undefined;
+  let userId: string | undefined;
+  let isCommunityMember = false;
+  try {
+    const serverClient = await createClient();
+    if (serverClient) {
+      const { data } = await serverClient.auth.getUser();
+      const user = data.user;
+      if (user) {
+        userEmail = user.email ?? undefined;
+        userId = user.id;
+        const { data: membership } = await serverClient
+          .from("community_members")
+          .select("id")
+          .eq("place_slug", place)
+          .eq("community_slug", community)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        isCommunityMember = !!membership;
+      }
+    }
+  } catch {
+    // Treat as signed out
+  }
+  const powerUser = isPowerUser(userEmail);
+  const isMember = !!userEmail;
 
   // Ensure place + community exist
   const [{ data: placeRow }, { data: communityRow }] = await Promise.all([
@@ -197,7 +232,64 @@ export default async function CommunityPage({ params }: Props) {
     classifieds: classifiedsCount.count ?? 0,
     hosted: hostedCount.count ?? 0,
     recs: recsCount.count ?? 0,
+    members: 0,
   };
+
+  // Member count and directory (opt-in only; power users see all)
+  let directoryMembers: Array<{
+    id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    bio: string | null;
+    joined_at: string;
+  }> = [];
+  if (supabaseAdmin) {
+    const [countRes, membersRes] = await Promise.all([
+      supabaseAdmin
+        .from("community_members")
+        .select("id", { count: "exact", head: true })
+        .eq("place_slug", place)
+        .eq("community_slug", community),
+      powerUser
+        ? supabaseAdmin
+            .from("community_members")
+            .select("user_id, joined_at")
+            .eq("place_slug", place)
+            .eq("community_slug", community)
+            .order("joined_at", { ascending: false })
+        : supabaseAdmin
+            .from("community_members")
+            .select("user_id, joined_at")
+            .eq("place_slug", place)
+            .eq("community_slug", community)
+            .eq("show_in_directory", true)
+            .order("joined_at", { ascending: false }),
+    ]);
+    const totalMembers = countRes.count ?? 0;
+    sectionCounts.members = totalMembers;
+
+    const memberRows = (membersRes.data ?? []) as { user_id: string; joined_at: string }[];
+    if (memberRows.length > 0) {
+      const userIds = memberRows.map((r) => r.user_id);
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, display_name, avatar_url, bio")
+        .in("id", userIds);
+      const profileMap = new Map(
+        (profiles ?? []).map((p: any) => [p.id, p])
+      );
+      directoryMembers = memberRows.map((row) => {
+        const p = profileMap.get(row.user_id) as any;
+        return {
+          id: row.user_id,
+          display_name: p?.display_name ?? null,
+          avatar_url: p?.avatar_url ?? null,
+          bio: p?.bio ?? null,
+          joined_at: row.joined_at,
+        };
+      });
+    }
+  }
 
   const classifieds = classifiedsRes.data ?? [];
   const leftClassifieds = classifieds.filter((p: any) =>
@@ -206,6 +298,34 @@ export default async function CommunityPage({ params }: Props) {
   const rightClassifieds = classifieds.filter(
     (p: any) => p.category === "gear"
   );
+
+  // Last activity label
+  const allPosts = [
+    ...(thisWeekRes.data ?? []),
+    ...(boardRes.data ?? []),
+    ...(missedRes.data ?? []),
+    ...(anonRes.data ?? []),
+    ...(classifiedsRes.data ?? []),
+    ...(hostedRes.data ?? []),
+    ...(recsRes.data ?? []),
+  ] as any[];
+
+  let lastPostLabel: string | null = null;
+  if (allPosts.length > 0) {
+    const latest = allPosts.reduce((latestDate, post) => {
+      const d = new Date(post.created_at);
+      return d > latestDate ? d : latestDate;
+    }, new Date(allPosts[0].created_at));
+    const days = Math.max(
+      0,
+      Math.round(
+        (Date.now() - latest.getTime()) / (1000 * 60 * 60 * 24)
+      )
+    );
+    if (days === 0) lastPostLabel = "last post today";
+    else if (days === 1) lastPostLabel = "last post 1 day ago";
+    else lastPostLabel = `last post ${days} days ago`;
+  }
 
   return (
     <div className="min-h-screen bg-paper">
@@ -221,22 +341,74 @@ export default async function CommunityPage({ params }: Props) {
             <span className="text-faded">{place}/</span>
             <span className="text-ink">{community}</span>
           </h1>
-          <p className="mt-4 font-courier text-sm text-faded">
-            <Link
-              href={`/${place}/new`}
-              className="text-link hover:underline"
-            >
-              start a community here →
-            </Link>
+          {/* Community description */}
+          {communityRow.description && (
+            <p className="mt-2 font-courier text-sm text-faded">
+              {communityRow.description}
+            </p>
+          )}
+          {!communityRow.description && powerUser && (
+            <p className="mt-2 font-courier text-sm text-faded">
+              <span className="text-link hover:underline">
+                Add a description →
+              </span>
+            </p>
+          )}
+          {/* Member + activity signal */}
+          <p className="mt-1 font-courier text-xs text-faded">
+            {sectionCounts.members} {sectionCounts.members === 1 ? "member" : "members"}
+            {lastPostLabel ? ` · ${lastPostLabel}` : null}
           </p>
+          {/* Primary CTA */}
+          <div className="mt-4">
+            {isMember && isCommunityMember ? (
+              <Link
+                href={`/${place}/${community}/submit`}
+                className="inline-block border border-ink bg-ink px-3 py-1 font-bebas text-xs tracking-[2px] text-paper hover:bg-transparent hover:text-ink"
+              >
+                Post something →
+              </Link>
+            ) : isMember && !isCommunityMember ? (
+              <JoinCommunityButton place={place} community={community} />
+            ) : (
+              <Link
+                href={`/login/sign-up?next=${encodeURIComponent(
+                  `/${place}/${community}`
+                )}`}
+                className="inline-block border border-ink bg-paper px-3 py-1 font-bebas text-xs tracking-[2px] text-ink hover:bg-ink hover:text-paper"
+              >
+                Join the community →
+              </Link>
+            )}
+          </div>
         </header>
+
+        {showDirectoryPrompt && (
+          <DirectoryOptInPrompt place={place} community={community} />
+        )}
 
         <SectionNav counts={sectionCounts} />
 
         {/* This Week */}
         <ThisWeekSection events={(thisWeekRes.data ?? []) as any} />
 
-        {/* Recurring crews — to be wired from `crews` later */}
+        {/* Members directory */}
+        <section id="members" className="mb-10">
+          <h2 className="section-head font-bebas tracking-[2px] text-ink">
+            MEMBERS
+          </h2>
+          {directoryMembers.length === 0 ? (
+            <p className="font-courier text-sm text-faded">
+              No members in the directory yet. Join and opt in to appear here.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {directoryMembers.map((member) => (
+                <MemberCard key={member.id} member={member} />
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* The Board */}
         <section id="board" className="mb-10">
@@ -368,16 +540,23 @@ export default async function CommunityPage({ params }: Props) {
         {/* Footer */}
         <footer className="border-t border-rule pt-6 font-courier text-sm text-faded">
           {place}/{community} ·{" "}
-          <Link
-            href={`/${place}/${community}/submit`}
-            className="text-link hover:underline"
-          >
-            post something
-          </Link>{" "}
-          ·{" "}
-          <Link href={`/${place}/new`} className="text-link hover:underline">
-            start a community
-          </Link>{" "}
+          {isMember ? (
+            <Link
+              href={`/${place}/${community}/submit`}
+              className="text-link hover:underline"
+            >
+              Post something →
+            </Link>
+          ) : (
+            <Link
+              href={`/login/sign-up?next=${encodeURIComponent(
+                `/${place}/${community}/submit`
+              )}`}
+              className="text-link hover:underline"
+            >
+              Join to post →
+            </Link>
+          )}{" "}
           ·{" "}
           <a
             href="mailto:hello@gayborhood.com"
